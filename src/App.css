@@ -1,0 +1,161 @@
+.app-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.app-header {
+  text-align: center;
+  margin-bottom: 40px;
+  padding: 20px 0;
+  border-bottom: 2px solid var(--accent);
+}
+
+.app-header h1 {
+  font-size: 2.5rem;
+  margin: 0;
+  color: var(--text-h);
+}
+
+.loading {
+  text-align: center;
+  padding: 60px 20px;
+  font-size: 1.2rem;
+  color: var(--text-secondary);
+}
+
+.filter-section {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 30px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.filter-btn {
+  padding: 10px 16px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-alt);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.filter-btn:hover {
+  background: var(--accent-bg);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.filter-btn.active {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+.bills-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 20px;
+}
+
+.bill-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 20px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.bill-card:hover {
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  border-color: var(--accent);
+}
+
+.bill-title {
+  font-size: 1.1rem;
+  margin: 0 0 12px 0;
+  color: var(--text-h);
+  line-height: 1.4;
+}
+
+.bill-summary {
+  font-size: 0.95rem;
+  color: var(--text);
+  margin: 0 0 16px 0;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.bill-meta {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.bill-status {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.bill-status.status-passed {
+  background: #d4edda;
+  color: #155724;
+}
+
+.bill-status.status-failed {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.bill-status.status-pending {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.bill-status.status-in-progress {
+  background: #d1ecf1;
+  color: #0c5460;
+}
+
+.bill-topic {
+  display: inline-block;
+  padding: 4px 10px;
+  background: var(--accent-bg);
+  color: var(--accent);
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .app-container {
+    padding: 12px;
+  }
+
+  .app-header h1 {
+    font-size: 1.8rem;
+  }
+
+  .bills-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .filter-section {
+    justify-content: flex-start;
+    overflow-x: auto;
+    padding: 4px 0;
+  }
+}
