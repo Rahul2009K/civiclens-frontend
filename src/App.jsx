@@ -1,83 +1,117 @@
 import { useState, useEffect } from 'react'
 import './App.css'
 
+function BillDetail({ bill, onBack }) {
+  return (
+    <div className="detail-page">
+      <button className="back-btn" onClick={onBack}>← Back to all bills</button>
+      <div className="topic-tags">
+        {bill.topics?.map((topic) => (
+          <span key={topic} className="tag">{topic}</span>
+        ))}
+      </div>
+      <h1>{bill.plain_title}</h1>
+      <p className="summary">{bill.plain_summary}</p>
+
+      <div className="detail-section">
+        <h3>Key Provisions</h3>
+        <ul>
+          {bill.key_provisions?.map((p, i) => (
+            <li key={i}>{p}</li>
+          ))}
+        </ul>
+      </div>
+
+      <div className="detail-section">
+        <h3>Who It Affects</h3>
+        <p>{bill.who_it_affects}</p>
+      </div>
+
+      <div className="detail-section">
+        <h3>Current Status</h3>
+        <p className="status">{bill.status_plain_english}</p>
+      </div>
+    </div>
+  )
+}
+
+function BillCard({ bill, onClick }) {
+  return (
+    <div className="bill-card" onClick={() => onClick(bill)}>
+      <div className="topic-tags">
+        {bill.topics?.map((topic) => (
+          <span key={topic} className="tag">{topic}</span>
+        ))}
+      </div>
+      <h2>{bill.plain_title}</h2>
+      <p className="summary">{bill.plain_summary}</p>
+      <p className="status">{bill.status_plain_english}</p>
+      <p className="read-more">Read more →</p>
+    </div>
+  )
+}
+
 function App() {
   const [bills, setBills] = useState([])
   const [loading, setLoading] = useState(true)
-  const [selectedTopic, setSelectedTopic] = useState('All')
-  const [topics, setTopics] = useState([])
+  const [activeFilter, setActiveFilter] = useState('All')
+  const [selectedBill, setSelectedBill] = useState(null)
 
   useEffect(() => {
     fetch(import.meta.env.VITE_API_URL || 'http://localhost:5000/bills')
       .then((res) => res.json())
       .then((data) => {
         setBills(data)
-
-        const uniqueTopics = new Set()
-        data.forEach((bill) => {
-          if (bill.topic) {
-            uniqueTopics.add(bill.topic)
-          }
-        })
-        setTopics(Array.from(uniqueTopics).sort())
         setLoading(false)
       })
-      .catch((error) => {
-        console.error('Error fetching bills:', error)
+      .catch((err) => {
+        console.error('Failed to fetch bills:', err)
         setLoading(false)
       })
   }, [])
 
-  const filteredBills = selectedTopic === 'All'
+  const allTopics = ['All', ...new Set(bills.flatMap((b) => b.topics || []))]
+
+  const filteredBills = activeFilter === 'All'
     ? bills
-    : bills.filter((bill) => bill.topic === selectedTopic)
+    : bills.filter((b) => b.topics?.includes(activeFilter))
+
+  if (selectedBill) {
+    return (
+      <div className="app">
+        <BillDetail bill={selectedBill} onBack={() => setSelectedBill(null)} />
+      </div>
+    )
+  }
 
   return (
-    <div className="app-container">
-      <header className="app-header">
-        <h1>CivicLens</h1>
-      </header>
+    <div className="app">
+      <h1>CivicLens</h1>
+      <p className="tagline">Congress, explained in plain English</p>
 
-      {loading ? (
-        <div className="loading">Loading bills...</div>
-      ) : (
-        <>
-          <div className="filter-section">
-            <button
-              className={`filter-btn ${selectedTopic === 'All' ? 'active' : ''}`}
-              onClick={() => setSelectedTopic('All')}
-            >
-              All
-            </button>
-            {topics.map((topic) => (
-              <button
-                key={topic}
-                className={`filter-btn ${selectedTopic === topic ? 'active' : ''}`}
-                onClick={() => setSelectedTopic(topic)}
-              >
-                {topic}
-              </button>
-            ))}
-          </div>
+      <div className="filters">
+        {allTopics.map((topic) => (
+          <button
+            key={topic}
+            className={topic === activeFilter ? 'filter active' : 'filter'}
+            onClick={() => setActiveFilter(topic)}
+          >
+            {topic}
+          </button>
+        ))}
+      </div>
 
-          <div className="bills-grid">
-            {filteredBills.map((bill) => (
-              <div key={bill.id} className="bill-card">
-                <h2 className="bill-title">{bill.plain_title}</h2>
-                <p className="bill-summary">{bill.plain_summary}</p>
-                <div className="bill-meta">
-                  <span className={`bill-status status-${bill.status_plain_english.toLowerCase()}`}>
-                    {bill.status_plain_english}
-                  </span>
-                  {bill.topic && (
-                    <span className="bill-topic">{bill.topic}</span>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </>
-      )}
+      {loading && <p>Loading bills...</p>}
+
+      <div className="bill-list">
+        {filteredBills.map((bill) => (
+          <BillCard
+            key={bill.id}
+            bill={bill}
+            onClick={setSelectedBill}
+          />
+        ))}
+      </div>
     </div>
   )
 }
