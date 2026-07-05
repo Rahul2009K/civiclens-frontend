@@ -3,6 +3,23 @@ import './App.css'
 import { auth, signInWithGoogle, signOutUser, saveBill, unsaveBill, getSavedBills } from './firebase'
 import { onAuthStateChanged } from 'firebase/auth'
 
+const TOPIC_COLORS = {
+  'Education': 'topic-blue',
+  'Immigration': 'topic-coral',
+  'Healthcare': 'topic-teal',
+  'Climate': 'topic-green',
+  'Economy': 'topic-amber',
+  'Civil Rights': 'topic-purple',
+  'Criminal Justice': 'topic-red',
+  'Technology': 'topic-pink',
+  'Foreign Policy': 'topic-gray',
+  'Other': 'topic-gray',
+}
+
+function getTopicClass(topic) {
+  return TOPIC_COLORS[topic] || 'topic-gray'
+}
+
 function BillDetail({ bill, onBack, user, savedIds, onSave, onUnsave }) {
   const isSaved = savedIds.has(bill.id)
 
@@ -11,7 +28,7 @@ function BillDetail({ bill, onBack, user, savedIds, onSave, onUnsave }) {
       <button className="back-btn" onClick={onBack}>← Back to all bills</button>
       <div className="topic-tags">
         {bill.topics?.map((topic) => (
-          <span key={topic} className="tag">{topic}</span>
+          <span key={topic} className={`tag ${getTopicClass(topic)}`}>{topic}</span>
         ))}
       </div>
       <h1>{bill.plain_title}</h1>
@@ -57,7 +74,7 @@ function BillCard({ bill, onClick, user, savedIds, onSave, onUnsave }) {
       <div className="bill-card-header" onClick={() => onClick(bill)}>
         <div className="topic-tags">
           {bill.topics?.map((topic) => (
-            <span key={topic} className="tag">{topic}</span>
+            <span key={topic} className={`tag ${getTopicClass(topic)}`}>{topic}</span>
           ))}
         </div>
         <h2>{bill.plain_title}</h2>
@@ -84,6 +101,7 @@ function App() {
   const [bills, setBills] = useState([])
   const [loading, setLoading] = useState(true)
   const [activeFilter, setActiveFilter] = useState('All')
+  const [searchQuery, setSearchQuery] = useState('')
   const [selectedBill, setSelectedBill] = useState(null)
   const [user, setUser] = useState(null)
   const [savedIds, setSavedIds] = useState(new Set())
@@ -138,9 +156,14 @@ function App() {
 
   const allTopics = ['All', ...new Set(bills.flatMap((b) => b.topics || []))]
 
-  const filteredBills = activeFilter === 'All'
-    ? bills
-    : bills.filter((b) => b.topics?.includes(activeFilter))
+  const filteredBills = bills.filter((b) => {
+    const matchesTopic = activeFilter === 'All' || b.topics?.includes(activeFilter)
+    const query = searchQuery.trim().toLowerCase()
+    const matchesSearch = query === '' ||
+      b.plain_title?.toLowerCase().includes(query) ||
+      b.plain_summary?.toLowerCase().includes(query)
+    return matchesTopic && matchesSearch
+  })
 
   if (selectedBill) {
     return (
@@ -185,7 +208,7 @@ function App() {
         <div>
           <h2 style={{fontSize:'1.1rem', margin:'1.5rem 0 1rem'}}>My Watchlist</h2>
           {savedBills.length === 0 ? (
-            <p style={{color:'#777'}}>No saved bills yet — browse bills and click ☆ Save to add them here.</p>
+            <p style={{color:'var(--text-secondary)'}}>No saved bills yet — browse bills and click ☆ Save to add them here.</p>
           ) : (
             <div className="bill-list">
               {savedBills.map((bill) => (
@@ -204,11 +227,23 @@ function App() {
         </div>
       ) : (
         <>
+          <input
+            type="text"
+            className="search-input"
+            placeholder="Search bills by keyword..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+
           <div className="filters">
             {allTopics.map((topic) => (
               <button
                 key={topic}
-                className={topic === activeFilter ? 'filter active' : 'filter'}
+                className={
+                  topic === activeFilter
+                    ? 'filter active'
+                    : `filter ${topic === 'All' ? '' : getTopicClass(topic)}`
+                }
                 onClick={() => setActiveFilter(topic)}
               >
                 {topic}
@@ -217,6 +252,10 @@ function App() {
           </div>
 
           {loading && <p>Loading bills...</p>}
+
+          {!loading && filteredBills.length === 0 && (
+            <p style={{color:'var(--text-secondary)'}}>No bills match your search.</p>
+          )}
 
           <div className="bill-list">
             {filteredBills.map((bill) => (

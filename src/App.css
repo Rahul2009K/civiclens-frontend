@@ -223,3 +223,24 @@
 .bill-card-header {
   cursor: pointer;
 }
+
+.search-input {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+  margin: 1rem 0;
+  box-sizing: border-box;
+}
+
+.topic-blue { background: #E6F1FB; color: #0C447C; }
+.topic-coral { background: #FAECE7; color: #712B13; }
+.topic-teal { background: #E1F5EE; color: #085041; }
+.topic-green { background: #EAF3DE; color: #27500A; }
+.topic-amber { background: #FAEEDA; color: #633806; }
+.topic-purple { background: #EEEDFE; color: #3C3489; }
+.topic-red { background: #FCEBEB; color: #791F1F; }
+.topic-pink { background: #FBEAF0; color: #72243E; }
+.topic-gray { background: #F1EFE8; color: #444441; }
+.topic-gray { background: #F1EFE8; color: #444441; }
