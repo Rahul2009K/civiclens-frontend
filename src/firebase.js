@@ -45,3 +45,50 @@ export async function isBillSaved(userId, billId) {
   const snapshot = await getDoc(ref)
   return snapshot.exists()
 }
+
+export async function getBillVotes(billId) {
+  const ref = doc(db, 'billVotes', billId)
+  const snapshot = await getDoc(ref)
+  if (snapshot.exists()) {
+    return snapshot.data()
+  }
+  return { likes: 0, dislikes: 0 }
+}
+
+export async function getUserVote(userId, billId) {
+  const ref = doc(db, 'billVotes', billId, 'userVotes', userId)
+  const snapshot = await getDoc(ref)
+  return snapshot.exists() ? snapshot.data().vote : null
+}
+
+export async function castVote(userId, billId, voteType) {
+  const voteRef = doc(db, 'billVotes', billId, 'userVotes', userId)
+  const billRef = doc(db, 'billVotes', billId)
+
+  const existingVote = await getDoc(voteRef)
+  const previousVote = existingVote.exists() ? existingVote.data().vote : null
+
+  const billSnapshot = await getDoc(billRef)
+  const current = billSnapshot.exists() ? billSnapshot.data() : { likes: 0, dislikes: 0 }
+
+  let { likes, dislikes } = current
+
+  if (previousVote === voteType) {
+    if (voteType === 'like') likes = Math.max(0, likes - 1)
+    if (voteType === 'dislike') dislikes = Math.max(0, dislikes - 1)
+    await setDoc(voteRef, { vote: null })
+    await setDoc(billRef, { likes, dislikes })
+    return { likes, dislikes, userVote: null }
+  }
+
+  if (previousVote === 'like') likes = Math.max(0, likes - 1)
+  if (previousVote === 'dislike') dislikes = Math.max(0, dislikes - 1)
+
+  if (voteType === 'like') likes += 1
+  if (voteType === 'dislike') dislikes += 1
+
+  await setDoc(voteRef, { vote: voteType })
+  await setDoc(billRef, { likes, dislikes })
+
+  return { likes, dislikes, userVote: voteType }
+}

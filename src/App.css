@@ -1,3 +1,28 @@
+:root {
+  --bg-primary: #ffffff;
+  --bg-card: #ffffff;
+  --text-main: #1a1a1a;
+  --text-sub: #666;
+  --border-color: #e0e0e0;
+  --tag-bg: #f0f0f0;
+  --tag-text: #444;
+}
+
+[data-theme="dark"] {
+  --bg-primary: #121212;
+  --bg-card: #1e1e1e;
+  --text-main: #f0f0f0;
+  --text-sub: #aaa;
+  --border-color: #333;
+  --tag-bg: #2a2a2a;
+  --tag-text: #ccc;
+}
+
+body {
+  background: var(--bg-primary);
+  transition: background 0.2s;
+}
+
 .app-container {
   max-width: 1200px;
   margin: 0 auto;
@@ -63,8 +88,8 @@
 }
 
 .bill-card {
-  background: var(--card-bg);
-  border: 1px solid var(--border);
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   padding: 20px;
   transition: all 0.3s ease;
@@ -169,32 +194,32 @@
   align-items: center;
   gap: 12px;
   font-size: 14px;
-  color: #555;
+  color: var(--text-sub);
 }
 
 .auth-btn {
   padding: 6px 14px;
   border-radius: 8px;
-  border: 1px solid #ccc;
-  background: white;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
   cursor: pointer;
   font-size: 13px;
-  color: #333;
+  color: var(--text-main);
 }
 
 .auth-btn:hover {
-  background: #f5f5f5;
+  background: var(--tag-bg);
 }
 
 .save-btn {
   padding: 8px 16px;
   border-radius: 8px;
-  border: 1px solid #ccc;
-  background: white;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
   cursor: pointer;
   font-size: 14px;
   margin: 0.75rem 0 1rem;
-  color: #333;
+  color: var(--text-main);
 }
 
 .save-btn.saved {
@@ -206,12 +231,12 @@
 .save-btn-small {
   padding: 4px 12px;
   border-radius: 999px;
-  border: 1px solid #ccc;
-  background: white;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
   cursor: pointer;
   font-size: 12px;
   margin-top: 8px;
-  color: #555;
+  color: var(--text-sub);
 }
 
 .save-btn-small.saved {
@@ -228,10 +253,55 @@
   width: 100%;
   padding: 10px 14px;
   border-radius: 8px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border-color);
   font-size: 14px;
   margin: 1rem 0;
   box-sizing: border-box;
+  background: var(--bg-card);
+  color: var(--text-main);
+}
+
+.theme-toggle {
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-main);
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.vote-buttons {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.vote-btn {
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-main);
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.vote-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.vote-btn.liked {
+  background: #d1f0dc;
+  border-color: #4caf50;
+  color: #1a1a1a;
+}
+
+.vote-btn.disliked {
+  background: #f8d7da;
+  border-color: #dc3545;
+  color: #1a1a1a;
 }
 
 .topic-blue { background: #E6F1FB; color: #0C447C; }

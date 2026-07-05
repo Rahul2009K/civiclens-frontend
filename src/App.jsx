@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import './App.css'
-import { auth, signInWithGoogle, signOutUser, saveBill, unsaveBill, getSavedBills } from './firebase'
+import { auth, signInWithGoogle, signOutUser, saveBill, unsaveBill, getSavedBills, getBillVotes, getUserVote, castVote } from './firebase'
 import { onAuthStateChanged } from 'firebase/auth'
 
 const TOPIC_COLORS = {
@@ -18,6 +18,29 @@ const TOPIC_COLORS = {
 
 function getTopicClass(topic) {
   return TOPIC_COLORS[topic] || 'topic-gray'
+}
+
+function VoteButtons({ bill, user, votes, userVote, onVote }) {
+  return (
+    <div className="vote-buttons">
+      <button
+        className={userVote === 'like' ? 'vote-btn liked' : 'vote-btn'}
+        onClick={(e) => { e.stopPropagation(); user && onVote(bill.id, 'like') }}
+        disabled={!user}
+        title={user ? '' : 'Sign in to vote'}
+      >
+        👍 {votes.likes || 0}
+      </button>
+      <button
+        className={userVote === 'dislike' ? 'vote-btn disliked' : 'vote-btn'}
+        onClick={(e) => { e.stopPropagation(); user && onVote(bill.id, 'dislike') }}
+        disabled={!user}
+        title={user ? '' : 'Sign in to vote'}
+      >
+        👎 {votes.dislikes || 0}
+      </button>
+    </div>
+  )
 }
 
 function BillDetail({ bill, onBack, user, savedIds, onSave, onUnsave }) {
@@ -66,7 +89,7 @@ function BillDetail({ bill, onBack, user, savedIds, onSave, onUnsave }) {
   )
 }
 
-function BillCard({ bill, onClick, user, savedIds, onSave, onUnsave }) {
+function BillCard({ bill, onClick, user, savedIds, onSave, onUnsave, votes, userVote, onVote }) {
   const isSaved = savedIds.has(bill.id)
 
   return (
@@ -93,6 +116,13 @@ function BillCard({ bill, onClick, user, savedIds, onSave, onUnsave }) {
           {isSaved ? '★ Saved' : '☆ Save'}
         </button>
       )}
+      <VoteButtons
+        bill={bill}
+        user={user}
+        votes={votes || { likes: 0, dislikes: 0 }}
+        userVote={userVote}
+        onVote={onVote}
+      />
     </div>
   )
 }
@@ -107,6 +137,33 @@ function App() {
   const [savedIds, setSavedIds] = useState(new Set())
   const [showWatchlist, setShowWatchlist] = useState(false)
   const [savedBills, setSavedBills] = useState([])
+  const [darkMode, setDarkMode] = useState(() => {
+    return localStorage.getItem('civiclens-theme') === 'dark'
+  })
+  const [votes, setVotes] = useState({})
+  const [userVotes, setUserVotes] = useState({})
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light')
+    localStorage.setItem('civiclens-theme', darkMode ? 'dark' : 'light')
+  }, [darkMode])
+
+  useEffect(() => {
+    if (bills.length === 0) return
+    Promise.all(bills.map(async (b) => [b.id, await getBillVotes(b.id)]))
+      .then((entries) => setVotes(Object.fromEntries(entries)))
+      .catch((err) => console.error('Failed to fetch votes:', err))
+  }, [bills])
+
+  useEffect(() => {
+    if (!user || bills.length === 0) {
+      setUserVotes({})
+      return
+    }
+    Promise.all(bills.map(async (b) => [b.id, await getUserVote(user.uid, b.id)]))
+      .then((entries) => setUserVotes(Object.fromEntries(entries)))
+      .catch((err) => console.error('Failed to fetch user votes:', err))
+  }, [user, bills])
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -154,6 +211,17 @@ function App() {
     setSavedBills(prev => prev.filter(b => b.id !== billId))
   }
 
+  async function handleVote(billId, voteType) {
+    if (!user) return
+    try {
+      const result = await castVote(user.uid, billId, voteType)
+      setVotes(prev => ({ ...prev, [billId]: { likes: result.likes, dislikes: result.dislikes } }))
+      setUserVotes(prev => ({ ...prev, [billId]: result.userVote }))
+    } catch (err) {
+      console.error('Failed to cast vote:', err)
+    }
+  }
+
   const allTopics = ['All', ...new Set(bills.flatMap((b) => b.topics || []))]
 
   const filteredBills = bills.filter((b) => {
@@ -186,6 +254,13 @@ function App() {
       <p className="tagline">Congress, explained in plain English</p>
 
       <div className="auth-bar">
+        <button
+          className="theme-toggle"
+          onClick={() => setDarkMode(!darkMode)}
+          style={{marginBottom: '0.75rem'}}
+        >
+          {darkMode ? '☀ Light mode' : '🌙 Dark mode'}
+        </button>
         {user ? (
           <div className="auth-bar-inner">
             <span>Signed in as {user.displayName}</span>
@@ -220,6 +295,9 @@ function App() {
                   savedIds={savedIds}
                   onSave={handleSave}
                   onUnsave={handleUnsave}
+                  votes={votes[bill.id]}
+                  userVote={userVotes[bill.id]}
+                  onVote={handleVote}
                 />
               ))}
             </div>
@@ -267,6 +345,9 @@ function App() {
                 savedIds={savedIds}
                 onSave={handleSave}
                 onUnsave={handleUnsave}
+                votes={votes[bill.id]}
+                userVote={userVotes[bill.id]}
+                onVote={handleVote}
               />
             ))}
           </div>
