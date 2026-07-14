@@ -20,6 +20,50 @@ function getTopicClass(topic) {
   return TOPIC_COLORS[topic] || 'topic-gray'
 }
 
+function ScalesIcon({ className }) {
+  return (
+    <svg className={className} viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M32 6c-4.5 0-7.8 2.4-7.8 2.4S28 11.4 32 11.4s7.8-2.6 7.8-2.6S36.5 6 32 6Z" fill="currentColor" />
+      <path d="M32 6v46" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+      <path d="M13 15h38" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+      <circle cx="32" cy="15" r="3.2" fill="currentColor" />
+      <g strokeWidth="2" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" fill="none">
+        <path d="M13 15 4 34" />
+        <path d="M13 15l9 19" />
+        <path d="M3 34c0 5 4.5 9 10 9s10-4 10-9" />
+        <path d="M51 15l-9 19" />
+        <path d="M51 15l9 19" />
+        <path d="M41 34c0 5 4.5 9 10 9s10-4 10-9" />
+      </g>
+      <path d="M20 57h24M32 52v5" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+      <path d="M21.5 51h21l-3 6h-15Z" fill="currentColor" />
+    </svg>
+  )
+}
+
+function Masthead() {
+  return (
+    <header className="site-masthead">
+      <div className="site-masthead-inner">
+        <ScalesIcon className="masthead-icon" />
+        <div className="masthead-text">
+          <h1>CivicLens</h1>
+          <p className="tagline">Congress, explained in plain English</p>
+        </div>
+      </div>
+    </header>
+  )
+}
+
+function BackgroundEmblems() {
+  return (
+    <>
+      <ScalesIcon className="bg-scales bg-scales-1" />
+      <ScalesIcon className="bg-scales bg-scales-2" />
+    </>
+  )
+}
+
 function VoteButtons({ bill, user, votes, userVote, onVote }) {
   return (
     <div className="vote-buttons">
@@ -235,24 +279,28 @@ function App() {
 
   if (selectedBill) {
     return (
-      <div className="app">
-        <BillDetail
-          bill={selectedBill}
-          onBack={() => setSelectedBill(null)}
-          user={user}
-          savedIds={savedIds}
-          onSave={handleSave}
-          onUnsave={handleUnsave}
-        />
+      <div className="page">
+        <Masthead />
+        <BackgroundEmblems />
+        <div className="app">
+          <BillDetail
+            bill={selectedBill}
+            onBack={() => setSelectedBill(null)}
+            user={user}
+            savedIds={savedIds}
+            onSave={handleSave}
+            onUnsave={handleUnsave}
+          />
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="app">
-      <h1>CivicLens</h1>
-      <p className="tagline">Congress, explained in plain English</p>
-
+    <div className="page">
+      <Masthead />
+      <BackgroundEmblems />
+      <div className="app">
       <div className="auth-bar">
         <button
           className="theme-toggle"
@@ -353,6 +401,7 @@ function App() {
           </div>
         </>
       )}
+      </div>
     </div>
   )
 }
