@@ -1,10 +1,10 @@
-# CivicLens (website)
+# Billshelf (website)
 
 **Live:** https://civiclens-frontend-gilt.vercel.app
 
-CivicLens explains the 100 newest bills in the U.S. Congress in plain English, for high school students and anyone without a civics or legal background. Every bill gets a short summary, its key provisions, who it affects, why it matters to a young person, and where it stands in the lawmaking process.
+Billshelf explains the 100 newest bills in the U.S. Congress in plain English, for high school students and anyone without a civics or legal background. Every bill gets a short summary, its key provisions, who it affects, why it matters to a young person, and where it stands in the lawmaking process.
 
-This repo is the website. The data pipeline and API live in [CivicLens](https://github.com/Rahul2009K/CivicLens).
+This repo is the website. The data pipeline and API live in the [backend repo](https://github.com/Rahul2009K/CivicLens).
 
 ## Features
 

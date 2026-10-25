@@ -8,7 +8,7 @@ export default function About({ billCount }) {
       <section className="about-hero">
         <div className="container about-hero-inner">
           <Reveal className="about-hero-copy">
-            <p className="eyebrow">About CivicLens</p>
+            <p className="eyebrow">About Billshelf</p>
             <h1 className="about-title">{ABOUT.headline}</h1>
             <p className="about-intro">{ABOUT.intro}</p>
           </Reveal>

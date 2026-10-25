@@ -259,14 +259,14 @@ export default function App() {
 
   // Document title
   useEffect(() => {
-    const base = 'CivicLens: Congress in plain English'
+    const base = 'Billshelf: Congress in plain English'
     if (route.name === 'bill') {
       const b = bills.find((x) => x.id === route.id) || savedBills.find((x) => x.id === route.id)
-      document.title = b ? `${clean(b.plain_title)} | CivicLens` : base
+      document.title = b ? `${clean(b.plain_title)} | Billshelf` : base
     } else if (route.name === 'watchlist') {
-      document.title = 'Your watchlist | CivicLens'
+      document.title = 'Your watchlist | Billshelf'
     } else if (route.name === 'about') {
-      document.title = 'About | CivicLens'
+      document.title = 'About | Billshelf'
     } else {
       document.title = base
     }

@@ -1,4 +1,4 @@
-// The CivicLens scales mark (kept from the original site's identity).
+// The Billshelf scales mark.
 export function ScalesMark({ className }) {
   return (
     <svg className={className} viewBox="0 0 64 64" fill="none" aria-hidden="true">
@@ -20,7 +20,7 @@ export function Wordmark() {
   return (
     <span className="wordmark">
       <ScalesMark className="wordmark-mark" />
-      <span className="wordmark-text">CivicLens</span>
+      <span className="wordmark-text">Billshelf</span>
     </span>
   )
 }

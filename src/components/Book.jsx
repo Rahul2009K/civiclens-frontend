@@ -29,7 +29,7 @@ function BookBack({ bill }) {
       <span className="book-back-label">{facts.label}</span>
       <p className="book-back-title">{clean(bill.plain_title)}</p>
       <p className="book-back-text">{clean(bill.plain_summary)}</p>
-      <span className="book-back-brand"><ScalesMark /> CivicLens</span>
+      <span className="book-back-brand"><ScalesMark /> Billshelf</span>
     </div>
   )
 }

@@ -115,7 +115,7 @@ export default function BookOpener({ opening, onNavigate, onDone }) {
           <div className="opener-page">
             <span className="opener-page-label">{facts.label}</span>
             <p className="opener-page-title">{clean(bill.plain_title)}</p>
-            <span className="opener-page-brand"><ScalesMark /> CivicLens</span>
+            <span className="opener-page-brand"><ScalesMark /> Billshelf</span>
           </div>
           {Array.from({ length: SHEETS }, (_, i) => (
             <div

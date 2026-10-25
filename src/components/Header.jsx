@@ -33,10 +33,10 @@ export default function Header({ active, scrolled, user, savedCount, theme, onTo
     <header className={`site-header${scrolled ? ' is-scrolled' : ''}`}>
       <div className="header-capsule">
         <div className="progress" aria-hidden="true" />
-        <a href="#/" className="brand" aria-label="CivicLens home">
+        <a href="#/" className="brand" aria-label="Billshelf home">
           <span className="brand-mark"><ScalesMark /></span>
           <span className="brand-text">
-            <span className="brand-name">CivicLens</span>
+            <span className="brand-name">Billshelf</span>
             <span className="brand-tag">Congress, decoded</span>
           </span>
         </a>

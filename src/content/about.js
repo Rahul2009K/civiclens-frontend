@@ -3,7 +3,7 @@
 export const ABOUT = {
   headline: 'Built by a student who wants to vote informed.',
   intro:
-    "I'm Rahul, a junior at Brookfield Central High School in Wisconsin. I built CivicLens to raise awareness of what our government is actually doing, because most people my age only hear about a law after it passes, usually from a headline or a thirty-second video.",
+    "I'm Rahul, a junior at Brookfield Central High School in Wisconsin. I built Billshelf to raise awareness of what our government is actually doing, because most people my age only hear about a law after it passes, usually from a headline or a thirty-second video.",
 
   story: [
     {
@@ -18,7 +18,7 @@ export const ABOUT = {
       heading: 'Where I come from',
       paragraphs: [
         "My family immigrated from India, and I'm a first-generation immigrant. I've seen how hard it is to follow American government when the language is dense and nobody explains the context. A lot of first-generation families learn the system one confusing form at a time.",
-        "CivicLens is the tool I wish my family and I had: something that explains what Congress is doing in words anyone can follow, without telling you what to think about it.",
+        "Billshelf is the tool I wish my family and I had: something that explains what Congress is doing in words anyone can follow, without telling you what to think about it.",
       ],
     },
   ],
@@ -26,13 +26,13 @@ export const ABOUT = {
   accuracy: [
     'Every bill comes straight from Congress.gov, the official record kept by the Library of Congress.',
     'Claude, an AI model by Anthropic, rewrites each bill in plain English from the official summary or, when that is not published yet, from the full text of the bill itself. Every bill page says which one it used.',
-    'Summaries are written to be neutral. CivicLens never tells you whether a bill is good or bad.',
+    'Summaries are written to be neutral. Billshelf never tells you whether a bill is good or bad.',
     'AI can make mistakes, so every bill links to its official text. Check it before you cite a bill in class or an argument.',
   ],
 
   privacy: [
     'You can read everything without an account.',
-    'Signing in with Google is only needed to save bills and vote. CivicLens stores your saved bills and your votes under an anonymous account ID.',
+    'Signing in with Google is only needed to save bills and vote. Billshelf stores your saved bills and your votes under an anonymous account ID.',
     'Vote totals are public counts. Nobody can see how you voted.',
     'The site uses Google Analytics to count visits. There are no ads and no data is sold.',
   ],
