@@ -226,7 +226,7 @@ function App() {
 
   useEffect(() => {
     // Accept the backend URL with or without "/bills" on the end
-    const apiBase = (import.meta.env.VITE_API_URL || 'http://localhost:5000').replace(/\/+$/, '').replace(/\/bills$/, '')
+    const apiBase = (import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000').replace(/\/+$/, '').replace(/\/bills$/, '')
     // The free backend sleeps when idle; tell people if it's waking up
     const slowTimer = setTimeout(() => setSlowLoad(true), 4000)
     fetch(`${apiBase}/bills`)
