@@ -240,7 +240,7 @@ const BY_TOPIC = {
   Other: Debate,
 }
 
-function CoverIllustration({ topic, palette, seed }) {
+function CoverIllustration({ topic, palette, seed, compact = false }) {
   const Drawing = BY_TOPIC[topic] || Debate
   const r = rng(seedFrom(`${seed}-halo`))
   // A soft halo behind the drawing, placed differently on every bill
@@ -254,9 +254,18 @@ function CoverIllustration({ topic, palette, seed }) {
       {ring
         ? <circle cx={hx} cy={hy} r={hr} fill="none" stroke={palette.ink} strokeOpacity="0.12" strokeWidth="18" />
         : <circle cx={hx} cy={hy} r={hr} fill={palette.ink} fillOpacity="0.08" />}
-      <g transform="translate(0 6)">
-        <Drawing p={palette} />
-      </g>
+      {compact ? (
+        // With a title plate on the cover, shrink the drawing into the top
+        // two thirds so the plate never hides it. A nested viewport keeps the
+        // animation origins (set in 300x420 units) correct.
+        <svg x="39" y="2" width="222" height="311" viewBox="0 0 300 420" overflow="visible">
+          <g transform="translate(0 6)"><Drawing p={palette} /></g>
+        </svg>
+      ) : (
+        <g transform="translate(0 6)">
+          <Drawing p={palette} />
+        </g>
+      )}
     </svg>
   )
 }

@@ -9,11 +9,12 @@ import Header from './components/Header'
 import Footer from './components/Footer'
 import BookOpener from './components/BookOpener'
 import ClickSparks from './components/ClickSparks'
+import AmbientBackground from './components/AmbientBackground'
 import Home from './pages/Home'
 import BillPage from './pages/BillPage'
 import Watchlist from './pages/Watchlist'
 import About from './pages/About'
-import { clean } from './lib/bills'
+import { clean, primaryTopic } from './lib/bills'
 import { billHref, useHashRoute } from './lib/useHashRoute'
 import { sfx } from './lib/sfx'
 
@@ -329,7 +330,10 @@ export default function App() {
   }), [user, votes, userVotes, savedIds, requestVotes, openBook, handleVote, handleSave, handleUnsave, requireSignIn])
 
   let page
+  let scene = 'home'
   if (route.name === 'bill') {
+    const b = bills.find((x) => x.id === route.id) || savedBills.find((x) => x.id === route.id)
+    scene = b ? primaryTopic(b) : 'Other'
     page = <BillPage id={route.id} bills={bills} savedBills={savedBills} loading={loading} ctx={ctx} />
   } else if (route.name === 'watchlist') {
     page = <Watchlist bills={bills} savedBills={savedBills} ctx={ctx} />
@@ -341,6 +345,7 @@ export default function App() {
 
   return (
     <div className="app">
+      <AmbientBackground scene={scene} theme={theme} />
       <div ref={sentinel} className="scroll-sentinel" aria-hidden="true" />
       <a href="#main" className="skip-link" onClick={(e) => { e.preventDefault(); document.getElementById('main')?.focus() }}>
         Skip to content

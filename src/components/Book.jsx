@@ -8,7 +8,7 @@ export function BookFront({ bill, palette, showTitle }) {
   const facts = billFacts(bill)
   return (
     <>
-      <CoverIllustration topic={primaryTopic(bill)} palette={pal} seed={bill.id} />
+      <CoverIllustration topic={primaryTopic(bill)} palette={pal} seed={bill.id} compact={showTitle} />
       <div className="book-sheen" />
       <span className="book-badge"><ScalesMark /></span>
       <div className="book-plate">

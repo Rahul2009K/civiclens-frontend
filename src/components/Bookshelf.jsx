@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
 import Book from './Book'
 import { openOnClick } from '../lib/openBook'
@@ -20,13 +20,36 @@ const JACKETS = [
   { bg: '#1d1b4f', a: '#ff6a3d', b: '#5ef0c5', ink: '#f3f1ff' },
 ]
 
+// Shown under the shelf while no book is pulled out. Gentle, nonpartisan
+// jokes about how Congress works, rotating every few seconds.
+const QUIPS = [
+  ['Fresh off the floor', 'Still warm from the congressional printer.'],
+  ['Committee status', 'A bill walks into committee. Two years later, it is still in committee.'],
+  ['Schoolhouse Rock', '“I’m just a bill.” Well, here are ten of them.'],
+  ['Origin story', 'Every one of these started with someone saying “there ought to be a law.”'],
+  ['Naming department', 'Somewhere, a staffer is still workshopping the acronym for one of these.'],
+  ['Odds', 'Most bills never become law. These ones are still dreaming.'],
+  ['Disclaimer', 'No filibusters were harmed in the making of this shelf.'],
+  ['Attributed, loosely', '“Laws are like sausages: better not to see them made.” Probably never said by Bismarck.'],
+  ['Reading time', 'Pick one. It’s shorter than the 400-page original, promise.'],
+  ['Breaking', 'Congress has opinions again. Here are the newest ones.'],
+]
+
 // The newest bills standing spine-out in a wooden bookcase. Hover pulls one
 // forward and turns its cover toward you; click plays the opening animation.
 export default function Bookshelf({ bills, ctx }) {
   const reduce = useReducedMotion()
   const [active, setActive] = useState(null)
-  const shown = active ?? bills[0]
+  const [quip, setQuip] = useState(0)
+  const shown = active
   const facts = shown ? billFacts(shown) : null
+
+  // Rotate the quip only while nobody is browsing the shelf
+  useEffect(() => {
+    if (active) return
+    const id = setInterval(() => setQuip((q) => (q + 1) % QUIPS.length), 6000)
+    return () => clearInterval(id)
+  }, [active])
 
   function pull(bill) {
     setActive(bill)
@@ -75,23 +98,35 @@ export default function Bookshelf({ bills, ctx }) {
         </div>
       </div>
 
-      {shown && (
-        <div className="shelf-caption" aria-live="polite">
-          <span className="shelf-caption-meta mono">
-            {facts.label} · {primaryTopic(shown)}
-            {shown.latest_action_date && <> · {formatDate(shown.latest_action_date)}</>}
-          </span>
-          <motion.p
-            key={shown.id}
-            className="shelf-caption-title"
-            initial={reduce ? false : { opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+      <div className="shelf-caption" aria-live="polite">
+        {shown ? (
+          <>
+            <span className="shelf-caption-meta mono">
+              {facts.label} · {primaryTopic(shown)}
+              {shown.latest_action_date && <> · {formatDate(shown.latest_action_date)}</>}
+            </span>
+            <motion.p
+              key={shown.id}
+              className="shelf-caption-title"
+              initial={reduce ? false : { opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+            >
+              {clean(shown.plain_title)}
+            </motion.p>
+          </>
+        ) : (
+          <motion.div
+            key={`quip-${quip}`}
+            initial={reduce ? false : { opacity: 0, y: 10, filter: 'blur(4px)' }}
+            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
           >
-            {clean(shown.plain_title)}
-          </motion.p>
-        </div>
-      )}
+            <span className="shelf-caption-meta mono">{QUIPS[quip][0]}</span>
+            <p className="shelf-caption-title is-quip">{QUIPS[quip][1]}</p>
+          </motion.div>
+        )}
+      </div>
     </div>
   )
 }
