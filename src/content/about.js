@@ -44,16 +44,4 @@ export const ABOUT = {
     ['Firebase', 'Google sign-in, watchlists and votes'],
   ],
 
-  credits: [
-    ['Criminal Justice cover', 'David Veksler', 'Unsplash', 'https://unsplash.com/photos/HpmDAS1Dozs'],
-    ['Foreign Policy cover', 'The Jopwell Collection', 'Unsplash', 'https://unsplash.com/photos/kvn38MTB2tg'],
-    ['Healthcare cover', 'Luis Melendez', 'Unsplash', 'https://unsplash.com/photos/Pd4lRfKo16U'],
-    ['Economy cover', 'Madison Kaminski', 'Unsplash', 'https://unsplash.com/photos/5fd2jdyGo-8'],
-    ['Climate cover', 'Urban Vintage', 'Unsplash', 'https://unsplash.com/photos/o0RZkkL072U'],
-    ['Technology cover', 'Immo Wegmann', 'Unsplash', 'https://unsplash.com/photos/w69Z8K-HGQU'],
-    ['Civil Rights cover', 'Library of Congress, via Unseen Histories', 'Unsplash', 'https://unsplash.com/photos/U2F-bYmuEqU'],
-    ['Other cover', 'Fine Photographics', 'Unsplash', 'https://unsplash.com/photos/I306rDlvTYY'],
-    ['Immigration cover', 'Yellowstone National Park (public domain)', 'Wikimedia Commons', 'https://commons.wikimedia.org/wiki/File:2024_Naturalization_Ceremony-_new_american_citizens_(54024451940).jpg'],
-    ['Education cover', 'Harrison Keely, CC BY 4.0', 'Wikimedia Commons', 'https://commons.wikimedia.org/wiki/File:Students_in_a_public_high_school_classroom_in_Hayesville,_North_Carolina.jpg'],
-  ],
 }

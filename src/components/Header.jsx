@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
-import { GoogleLogoIcon, ListIcon, MoonIcon, SignOutIcon, SunIcon, XIcon } from '@phosphor-icons/react'
+import { GoogleLogoIcon, ListIcon, MoonIcon, SignOutIcon, SpeakerHighIcon, SpeakerSlashIcon, SunIcon, XIcon } from '@phosphor-icons/react'
 import { ScalesMark } from './Brand'
+import { isMuted, onMuteChange, setMuted, sfx } from '../lib/sfx'
 
 function navItems(user, savedCount) {
   const items = [
@@ -17,6 +18,8 @@ function navItems(user, savedCount) {
 export default function Header({ active, scrolled, user, savedCount, theme, onToggleTheme, onSignIn, onSignOut }) {
   const reduce = useReducedMotion()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [muted, setMutedState] = useState(isMuted)
+  useEffect(() => onMuteChange(setMutedState), [])
   const items = navItems(user, savedCount)
 
   // Close the mobile menu after navigating
@@ -63,7 +66,19 @@ export default function Header({ active, scrolled, user, savedCount, theme, onTo
           <button
             type="button"
             className="icon-btn"
-            onClick={onToggleTheme}
+            data-sfx="custom"
+            onClick={() => { const next = !muted; setMuted(next); if (!next) sfx.chime() }}
+            aria-pressed={!muted}
+            aria-label={muted ? 'Turn sound effects on' : 'Turn sound effects off'}
+            title={muted ? 'Sound off' : 'Sound on'}
+          >
+            {muted ? <SpeakerSlashIcon /> : <SpeakerHighIcon />}
+          </button>
+          <button
+            type="button"
+            className="icon-btn"
+            data-sfx="custom"
+            onClick={() => { sfx.toggle(); onToggleTheme() }}
             aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
             title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
           >

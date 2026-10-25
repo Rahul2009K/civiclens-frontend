@@ -15,18 +15,6 @@ export const TOPIC_PALETTES = {
   Other:              { bg: '#5d5751', a: '#ebe4d9', b: '#2a2624', ink: '#f4efe8' },
 }
 
-// Cover photo per topic (see About > Credits). Files live in public/covers.
-const COVER_FILES = {
-  Education: 'education', Immigration: 'immigration', Healthcare: 'healthcare',
-  Climate: 'climate', Economy: 'economy', 'Civil Rights': 'civil-rights',
-  'Criminal Justice': 'criminal-justice', Technology: 'technology',
-  'Foreign Policy': 'foreign-policy', Other: 'other',
-}
-
-export function coverFor(bill) {
-  return `/covers/${COVER_FILES[primaryTopic(bill)] || 'other'}.webp`
-}
-
 export function primaryTopic(bill) {
   const topics = bill?.topics || []
   return topics.find((t) => t !== 'Other' && TOPIC_PALETTES[t]) || topics[0] || 'Other'

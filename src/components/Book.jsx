@@ -1,32 +1,21 @@
 import { useEffect, useRef } from 'react'
-import CoverArt from './CoverArt'
+import CoverIllustration from './CoverIllustration'
 import { ScalesMark } from './Brand'
-import { billFacts, clean, coverFor, paletteFor, primaryTopic, rng, seedFrom } from '../lib/bills'
+import { billFacts, clean, paletteFor, primaryTopic } from '../lib/bills'
 
-// Per-bill crop of the topic photo, so two Healthcare books never look identical
-function photoCrop(id) {
-  const r = rng(seedFrom(`${id}-crop`))
-  return {
-    backgroundPosition: `${Math.round(20 + r() * 60)}% ${Math.round(25 + r() * 50)}%`,
-    backgroundSize: `${Math.round(115 + r() * 45)}%`,
-  }
-}
-
-export function BookFront({ bill, showTitle }) {
-  const palette = paletteFor(bill)
+export function BookFront({ bill, palette, showTitle }) {
+  const pal = palette || paletteFor(bill)
   const facts = billFacts(bill)
   return (
     <>
-      <div className="book-photo" style={{ backgroundImage: `url(${coverFor(bill)})`, ...photoCrop(bill.id) }} />
-      <div className="book-tint" />
-      <div className="book-band">
-        <CoverArt seed={bill.id} palette={palette} width={300} height={56} />
-      </div>
+      <CoverIllustration topic={primaryTopic(bill)} palette={pal} seed={bill.id} />
       <div className="book-sheen" />
       <span className="book-badge"><ScalesMark /></span>
       <div className="book-plate">
         <span className="book-plate-label">{facts.label}</span>
-        {showTitle && <span className="book-plate-title">{clean(bill.plain_title)}</span>}
+        {showTitle && (
+          <span className={`book-plate-title${bill.plain_title.length > 58 ? ' is-long' : ''}`}>{clean(bill.plain_title)}</span>
+        )}
         <span className="book-plate-topic">{primaryTopic(bill)}</span>
       </div>
     </>
@@ -67,7 +56,7 @@ function useSpin(ref, enabled) {
         angle += Math.max(0.6, (target - angle) * 0.12)
         if (angle >= target - 0.5) { angle = 0; apply(); raf = 0; return }
       } else {
-        angle += dt * 0.11
+        angle += dt * 0.045 // about 8 seconds per turn
       }
       apply()
       raf = requestAnimationFrame(tick)
@@ -91,9 +80,9 @@ function useSpin(ref, enabled) {
 
 // A bill rendered as a physical hardcover in CSS 3D.
 // size: "sm" (grid, spins on hover), "lg" (bill page, follows pointer), "shelf" (spine out)
-export default function Book({ bill, size = 'sm' }) {
+export default function Book({ bill, size = 'sm', palette: paletteOverride }) {
   const ref = useRef(null)
-  const palette = paletteFor(bill)
+  const palette = paletteOverride || paletteFor(bill)
   const facts = billFacts(bill)
   const lg = size === 'lg'
   useSpin(ref, size === 'sm')
@@ -125,7 +114,7 @@ export default function Book({ bill, size = 'sm' }) {
         style={{ '--cover': palette.bg, '--cover-ink': palette.ink }}
       >
         <div className="book-face book-front">
-          <BookFront bill={bill} showTitle={lg} />
+          <BookFront bill={bill} palette={palette} showTitle={lg} />
         </div>
         <div className="book-face book-spine">
           <span className="book-spine-label">{facts.label}</span>

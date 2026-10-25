@@ -8,12 +8,13 @@ This repo is the website. The data pipeline and API live in [CivicLens](https://
 
 ## Features
 
-- **Bookshelf of the newest bills.** The ten newest bills stand spine-out on a 3D shelf. Hover pulls one forward; clicking plays an animation where the book flies forward and opens.
-- **Every bill is a book.** Covers combine a photo for the bill's topic, tinted in that topic's color, with generated artwork that is unique to each bill. Hovering a book spins it to show the back cover summary.
+- **Bookcase of the newest bills.** The ten newest bills stand spine-out in a wooden bookcase in clashing jacket colors. Hover pulls one forward; clicking plays an animation where the book flies forward, opens, and riffles its pages.
+- **Every bill is a book.** Each topic has its own flat illustration (a courthouse, a globe with a handshake, a chart, a classroom, a family arriving home, a heartbeat, mountains, an AI chip, protest signs, a debate podium) drawn in SVG, with small animations. Hovering a book slowly spins it to show the back cover summary.
 - **Bill pages** with the plain-English summary, key provisions, "why it matters to you", the sponsor, dates, a five-step progress tracker with a "how a bill becomes a law" explainer, and a link to the official text.
 - **Source labels.** Each summary says whether it was written from the official Congressional Research Service summary, the full bill text, or the title only.
 - **Search** by keyword or bill number, **filter** by topic, **sort** by newest or most liked.
 - **Google sign-in** to save bills to a watchlist and vote. Firestore rules allow one vote per account per bill.
+- **Effects:** click sparkles everywhere, and synthesized sound effects (page turns, books opening and closing, chimes) with a mute button. No audio files; everything is generated with the Web Audio API.
 - Light and dark themes, works on phones, respects the "reduce motion" accessibility setting.
 
 ## How it works
@@ -40,13 +41,13 @@ src/
   App.jsx              routing, data loading, auth, votes, the book-opening animation
   pages/               Home, BillPage, Watchlist, About
   components/          Header, Bookshelf, Book, BookOpener, BillIndex, BillTile,
-                       ParticleCapitol, CoverArt, StageTracker, ...
+                       ParticleCapitol, CoverIllustration, ClickSparks, StageTracker, ...
   lib/bills.js         bill numbers, stages, sponsors, dates, topic palettes
   lib/useHashRoute.js  tiny hash router (#/bill/<id>, #/about, ...)
-  content/about.js     About page copy and photo credits
+  lib/sfx.js           synthesized sound effects (Web Audio API)
+  content/about.js     About page copy
   firebase.js          auth, watchlist and vote helpers
 firestore.rules        security rules (one vote per account per bill)
-public/covers/         topic cover photos (credits on the About page)
 public/bills.json      snapshot written by the backend's generate_cache.py
 ```
 
@@ -66,4 +67,4 @@ Deploy Firestore rules with `npx firebase-tools deploy --only firestore:rules`.
 
 ## Credits
 
-Bill data: [Congress.gov API](https://api.congress.gov/). Summaries: Claude by Anthropic. Cover photo credits are listed on the site's About page and in `src/content/about.js`.
+Bill data: [Congress.gov API](https://api.congress.gov/). Summaries: Claude by Anthropic. All cover illustrations are original SVG drawings in `src/components/CoverIllustration.jsx`.

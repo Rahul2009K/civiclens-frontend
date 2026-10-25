@@ -8,12 +8,14 @@ import {
 import Header from './components/Header'
 import Footer from './components/Footer'
 import BookOpener from './components/BookOpener'
+import ClickSparks from './components/ClickSparks'
 import Home from './pages/Home'
 import BillPage from './pages/BillPage'
 import Watchlist from './pages/Watchlist'
 import About from './pages/About'
 import { clean } from './lib/bills'
 import { billHref, useHashRoute } from './lib/useHashRoute'
+import { sfx } from './lib/sfx'
 
 // Accept the backend URL with or without "/bills" on the end
 const API_BASE = (import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000')
@@ -224,13 +226,14 @@ export default function App() {
   }, [route.name, reduce])
 
   // Book click: play the opening animation, then navigate
-  const openBook = useCallback((bill, rect) => {
+  const openBook = useCallback((bill, rect, palette) => {
     if (route.name === 'home') homeScroll.current = window.scrollY
     if (reduce) {
+      sfx.pageTurn()
       window.location.hash = billHref(bill.id)
       return
     }
-    setOpening({ bill, rect, key: Date.now() })
+    setOpening({ bill, rect, palette, key: Date.now() })
   }, [reduce, route.name])
 
   // Scroll position on navigation
@@ -374,6 +377,7 @@ export default function App() {
       <div className="toast-region" aria-live="polite">
         {toast && <div className="toast" key={toast.key}>{toast.message}</div>}
       </div>
+      <ClickSparks />
       <div className="grain" aria-hidden="true" />
     </div>
   )

@@ -25,6 +25,8 @@ const BillTile = forwardRef(function BillTile({ bill, index = 0, ctx }, ref) {
         href={billHref(bill.id)}
         className="tile-link"
         data-spin-host
+        data-burst="big"
+        data-sfx="custom"
         onClick={(e) => openOnClick(e, bill, ctx)}
       >
         {/* Pops back into place every time it scrolls into view */}

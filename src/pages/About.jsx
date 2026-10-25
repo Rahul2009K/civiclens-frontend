@@ -1,4 +1,3 @@
-import { ArrowUpRightIcon } from '@phosphor-icons/react'
 import Reveal from '../components/Reveal'
 import { ScalesMark } from '../components/Brand'
 import { ABOUT } from '../content/about'
@@ -58,17 +57,6 @@ export default function About({ billCount }) {
           </dl>
         </Reveal>
 
-        <Reveal as="section" className="about-row" id="credits">
-          <h2>Photo credits</h2>
-          <ul className="about-credits">
-            {ABOUT.credits.map(([what, who, where, url]) => (
-              <li key={what}>
-                <span className="about-credit-what">{what}</span>
-                <a href={url} target="_blank" rel="noreferrer">{who}, {where} <ArrowUpRightIcon /></a>
-              </li>
-            ))}
-          </ul>
-        </Reveal>
       </div>
     </article>
   )

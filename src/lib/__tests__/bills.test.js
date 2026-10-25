@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { billFacts, clean, coverFor, formatDate, newestUpdate, primaryTopic, sponsorName, stageOf } from '../bills'
+import { billFacts, clean, formatDate, newestUpdate, primaryTopic, sponsorName, stageOf } from '../bills'
 
 describe('billFacts', () => {
   it('formats House and Senate bill numbers and links to Congress.gov', () => {
@@ -40,10 +40,9 @@ describe('text helpers', () => {
   })
 })
 
-describe('topics and covers', () => {
+describe('topics', () => {
   it('prefers a specific topic over "Other"', () => {
     expect(primaryTopic({ topics: ['Other', 'Healthcare'] })).toBe('Healthcare')
-    expect(coverFor({ topics: ['Civil Rights'] })).toBe('/covers/civil-rights.webp')
-    expect(coverFor({ topics: [] })).toBe('/covers/other.webp')
+    expect(primaryTopic({ topics: [] })).toBe('Other')
   })
 })

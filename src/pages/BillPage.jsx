@@ -5,6 +5,7 @@ import Reveal from '../components/Reveal'
 import { SaveButton, VoteButtons } from '../components/Actions'
 import { billFacts, clean, formatDate, paletteFor, sponsorName, stageOf, TOPIC_PALETTES } from '../lib/bills'
 import { billHref } from '../lib/useHashRoute'
+import { sfx } from '../lib/sfx'
 
 const SOURCE_NOTE = {
   official_summary: 'Written from the official summary by the Congressional Research Service.',
@@ -58,7 +59,7 @@ export default function BillPage({ id, bills, savedBills, loading, ctx }) {
     <article className="bill-page" style={{ '--tint': palette.bg }}>
       <div className="bill-band" aria-hidden="true" />
       <div className="container">
-        <a href="#/bills" className="back-link"><ArrowLeftIcon /> All bills</a>
+        <a href="#/bills" className="back-link" data-sfx="custom" onClick={() => sfx.bookClose()}><ArrowLeftIcon /> All bills</a>
 
         <div className="bill-grid">
           <div className="bill-visual">
@@ -163,13 +164,13 @@ export default function BillPage({ id, bills, savedBills, loading, ctx }) {
         {(prev || next) && (
           <nav className="pager" aria-label="More bills">
             {prev ? (
-              <a href={billHref(prev.id)} className="pager-link">
+              <a href={billHref(prev.id)} className="pager-link" data-sfx="custom" onClick={() => sfx.pageTurn()}>
                 <span className="pager-dir"><ArrowLeftIcon /> Newer</span>
                 <span className="pager-title">{clean(prev.plain_title)}</span>
               </a>
             ) : <span />}
             {next && (
-              <a href={billHref(next.id)} className="pager-link pager-next">
+              <a href={billHref(next.id)} className="pager-link pager-next" data-sfx="custom" onClick={() => sfx.pageTurn()}>
                 <span className="pager-dir">Older <ArrowRightIcon /></span>
                 <span className="pager-title">{clean(next.plain_title)}</span>
               </a>

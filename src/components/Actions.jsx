@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { BookmarkSimpleIcon, ThumbsDownIcon, ThumbsUpIcon } from '@phosphor-icons/react'
+import { sfx } from '../lib/sfx'
 
 // Like / dislike. Signed-out clicks ask the visitor to sign in instead of
 // silently doing nothing.
@@ -11,6 +12,7 @@ export function VoteButtons({ billId, votes, userVote, user, onVote, onRequireSi
   async function vote(type) {
     if (!user) return onRequireSignIn()
     if (pending) return
+    sfx.pop()
     setPending(true)
     try {
       await onVote(billId, type)
@@ -20,7 +22,7 @@ export function VoteButtons({ billId, votes, userVote, user, onVote, onRequireSi
   }
 
   return (
-    <div className={`votes votes-${size}`} role="group" aria-label="Rate this bill">
+    <div className={`votes votes-${size}`} role="group" aria-label="Rate this bill" data-sfx="custom">
       <button
         type="button"
         className={`chip-btn${userVote === 'like' ? ' is-on' : ''}`}
@@ -53,6 +55,8 @@ export function SaveButton({ bill, isSaved, user, onSave, onUnsave, onRequireSig
   async function toggle() {
     if (!user) return onRequireSignIn()
     if (pending) return
+    if (isSaved) sfx.bookClose()
+    else sfx.chime()
     setPending(true)
     try {
       if (isSaved) await onUnsave(bill.id)
@@ -66,6 +70,7 @@ export function SaveButton({ bill, isSaved, user, onSave, onUnsave, onRequireSig
     <button
       type="button"
       className={`chip-btn save-btn${isSaved ? ' is-on' : ''}${withLabel ? ' with-label' : ''}`}
+      data-sfx="custom"
       aria-pressed={isSaved}
       aria-label={isSaved ? 'Remove from watchlist' : 'Save to watchlist'}
       onClick={toggle}
