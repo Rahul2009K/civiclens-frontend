@@ -174,6 +174,7 @@ function BillCard({ bill, onClick, user, savedIds, onSave, onUnsave, votes, user
 function App() {
   const [bills, setBills] = useState([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
   const [activeFilter, setActiveFilter] = useState('All')
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedBill, setSelectedBill] = useState(null)
@@ -200,10 +201,7 @@ function App() {
   }, [bills])
 
   useEffect(() => {
-    if (!user || bills.length === 0) {
-      setUserVotes({})
-      return
-    }
+    if (!user || bills.length === 0) return
     Promise.all(bills.map(async (b) => [b.id, await getUserVote(user.uid, b.id)]))
       .then((entries) => setUserVotes(Object.fromEntries(entries)))
       .catch((err) => console.error('Failed to fetch user votes:', err))
@@ -212,6 +210,7 @@ function App() {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser)
+      if (!currentUser) setUserVotes({})
       if (currentUser) {
         const saved = await getSavedBills(currentUser.uid)
         setSavedBills(saved)
@@ -225,17 +224,28 @@ function App() {
   }, [])
 
   useEffect(() => {
-    fetch(import.meta.env.VITE_API_URL || 'http://localhost:5000/bills')
-      .then((res) => res.json())
+    // Accept the backend URL with or without "/bills" on the end
+    const apiBase = (import.meta.env.VITE_API_URL || 'http://localhost:5000').replace(/\/+$/, '').replace(/\/bills$/, '')
+    fetch(`${apiBase}/bills`)
+      .then((res) => {
+        if (!res.ok) throw new Error(`Server responded ${res.status}`)
+        return res.json()
+      })
       .then((data) => {
+        if (!Array.isArray(data)) throw new Error('Unexpected response format')
         setBills(data)
         setLoading(false)
       })
       .catch((err) => {
         console.error('Failed to fetch bills:', err)
+        setLoadError(true)
         setLoading(false)
       })
   }, [])
+
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [selectedBill])
 
   async function handleSave(bill) {
     if (!user) return
@@ -379,7 +389,11 @@ function App() {
 
           {loading && <p>Loading bills...</p>}
 
-          {!loading && filteredBills.length === 0 && (
+          {loadError && (
+            <p style={{color:'var(--text-secondary)'}}>Couldn't load bills right now. Please refresh in a moment.</p>
+          )}
+
+          {!loading && !loadError && filteredBills.length === 0 && (
             <p style={{color:'var(--text-secondary)'}}>No bills match your search.</p>
           )}
 

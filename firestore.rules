@@ -2,12 +2,19 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     match /billVotes/{billId} {
+      // Totals are counted from userVotes, so the parent doc is read-only.
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if false;
 
+      // One vote doc per account per bill. You can only write your own,
+      // and it can only say "like" or "dislike".
       match /userVotes/{userId} {
-        allow read: if request.auth != null && request.auth.uid == userId;
-        allow write: if request.auth != null && request.auth.uid == userId;
+        allow read: if true;
+        allow create, update: if request.auth != null
+          && request.auth.uid == userId
+          && request.resource.data.keys().hasOnly(['vote'])
+          && request.resource.data.vote in ['like', 'dislike'];
+        allow delete: if request.auth != null && request.auth.uid == userId;
       }
     }
 
