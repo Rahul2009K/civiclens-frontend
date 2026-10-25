@@ -175,6 +175,7 @@ function App() {
   const [bills, setBills] = useState([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState(false)
+  const [slowLoad, setSlowLoad] = useState(false)
   const [activeFilter, setActiveFilter] = useState('All')
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedBill, setSelectedBill] = useState(null)
@@ -226,6 +227,8 @@ function App() {
   useEffect(() => {
     // Accept the backend URL with or without "/bills" on the end
     const apiBase = (import.meta.env.VITE_API_URL || 'http://localhost:5000').replace(/\/+$/, '').replace(/\/bills$/, '')
+    // The free backend sleeps when idle; tell people if it's waking up
+    const slowTimer = setTimeout(() => setSlowLoad(true), 4000)
     fetch(`${apiBase}/bills`)
       .then((res) => {
         if (!res.ok) throw new Error(`Server responded ${res.status}`)
@@ -241,6 +244,7 @@ function App() {
         setLoadError(true)
         setLoading(false)
       })
+      .finally(() => clearTimeout(slowTimer))
   }, [])
 
   useEffect(() => {
@@ -387,7 +391,12 @@ function App() {
             ))}
           </div>
 
-          {loading && <p>Loading bills...</p>}
+          {loading && (
+            <p>
+              Loading bills...
+              {slowLoad && <span style={{color:'var(--text-secondary)'}}> The server is waking up, this can take up to a minute on the first visit.</span>}
+            </p>
+          )}
 
           {loadError && (
             <p style={{color:'var(--text-secondary)'}}>Couldn't load bills right now. Please refresh in a moment.</p>
