@@ -3,12 +3,13 @@
 export const ABOUT = {
   headline: 'Built by a student who wants to vote informed.',
   intro:
-    "I'm Rahul, a high school student. CivicLens is my attempt to fix something I kept noticing: most people my age only hear about a law after it passes, usually from a headline or a thirty-second video.",
+    "I'm Rahul, a junior at Brookfield Central High School in Wisconsin. I built CivicLens to raise awareness of what our government is actually doing, because most people my age only hear about a law after it passes, usually from a headline or a thirty-second video.",
 
   story: [
     {
       heading: 'Why I built it',
       paragraphs: [
+        "Young people are the least politically involved group in the country: voters under 25 turn out at the lowest rate of any age group. I don't think that's because we don't care. It's because the information isn't built for us.",
         "Bills are long and written in legal language, so even curious people give up after the first paragraph. That leaves teenagers out of conversations about the things that shape our future: what college costs, which jobs exist, how the internet is regulated, what happens to the climate, who gets to call this country home.",
         "Many of these bills don't affect me directly today. They will soon. In a few years my friends and I will be voters, and I want us to walk into that booth knowing what our representatives actually did, not just what they said.",
       ],
@@ -16,7 +17,7 @@ export const ABOUT = {
     {
       heading: 'Where I come from',
       paragraphs: [
-        "I'm a first-generation immigrant. I've seen how hard it is to follow American government when the language is dense and nobody explains the context. A lot of first-generation families learn the system one confusing form at a time.",
+        "My family immigrated from India, and I'm a first-generation immigrant. I've seen how hard it is to follow American government when the language is dense and nobody explains the context. A lot of first-generation families learn the system one confusing form at a time.",
         "CivicLens is the tool I wish my family and I had: something that explains what Congress is doing in words anyone can follow, without telling you what to think about it.",
       ],
     },
