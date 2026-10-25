@@ -7,16 +7,20 @@ import {
 } from './firebase'
 import Header from './components/Header'
 import Footer from './components/Footer'
+import BookOpener from './components/BookOpener'
 import Home from './pages/Home'
 import BillPage from './pages/BillPage'
 import Watchlist from './pages/Watchlist'
+import About from './pages/About'
 import { clean } from './lib/bills'
-import { useHashRoute } from './lib/useHashRoute'
+import { billHref, useHashRoute } from './lib/useHashRoute'
 
 // Accept the backend URL with or without "/bills" on the end
 const API_BASE = (import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000')
   .replace(/\/+$/, '')
   .replace(/\/bills$/, '')
+
+const HOME_SECTIONS = ['new', 'bills', 'how']
 
 function initialTheme() {
   try {
@@ -24,6 +28,20 @@ function initialTheme() {
     if (saved === 'dark' || saved === 'light') return saved
   } catch { /* storage blocked */ }
   return window.matchMedia?.('(prefers-color-scheme: light)').matches ? 'light' : 'dark'
+}
+
+async function getJSON(url, ms) {
+  const ctrl = new AbortController()
+  const t = setTimeout(() => ctrl.abort(), ms)
+  try {
+    const res = await fetch(url, { signal: ctrl.signal })
+    if (!res.ok) throw new Error(`${url} responded ${res.status}`)
+    const data = await res.json()
+    if (!Array.isArray(data)) throw new Error('Unexpected response format')
+    return data
+  } finally {
+    clearTimeout(t)
+  }
 }
 
 export default function App() {
@@ -41,8 +59,12 @@ export default function App() {
   const [userVotes, setUserVotes] = useState({})
   const [theme, setTheme] = useState(initialTheme)
   const [toast, setToast] = useState(null)
+  const [opening, setOpening] = useState(null)
+  const [section, setSection] = useState(null)
+  const [scrolled, setScrolled] = useState(false)
 
   const homeScroll = useRef(0)
+  const sentinel = useRef(null)
 
   // Theme
   useEffect(() => {
@@ -51,25 +73,33 @@ export default function App() {
     try { localStorage.setItem('civiclens-theme', theme) } catch { /* storage blocked */ }
   }, [theme])
 
-  // Bills
+  // Bills: show the bundled snapshot instantly, then upgrade to the live API.
+  // The free API host sleeps when idle, so the snapshot keeps first loads fast.
   useEffect(() => {
     let cancelled = false
-    fetch(`${API_BASE}/bills`)
-      .then((res) => {
-        if (!res.ok) throw new Error(`Server responded ${res.status}`)
-        return res.json()
-      })
+    let haveData = false
+    let haveSnapshot = false
+    getJSON('/bills.json', 8000)
       .then((data) => {
-        if (!Array.isArray(data)) throw new Error('Unexpected response format')
+        if (cancelled || haveData) return
+        haveSnapshot = true
+        setBills(data)
+        setLoadError(false) // the API may have failed first; the snapshot still counts
+        setLoading(false)
+      })
+      .catch(() => { /* no snapshot in local dev is fine */ })
+    getJSON(`${API_BASE}/bills`, 70000)
+      .then((data) => {
         if (cancelled) return
+        haveData = true
         setBills(data)
         setLoadError(false)
         setLoading(false)
       })
       .catch((err) => {
-        console.error('Failed to fetch bills:', err)
+        console.warn('Live API unavailable, using snapshot:', err.message)
         if (cancelled) return
-        setLoadError(true)
+        if (!haveSnapshot) setLoadError(true)
         setLoading(false)
       })
     return () => { cancelled = true }
@@ -81,21 +111,46 @@ export default function App() {
     setAttempt((n) => n + 1)
   }, [])
 
-  // Vote totals
-  useEffect(() => {
-    if (bills.length === 0) return
-    Promise.all(bills.map(async (b) => [b.id, await getBillVotes(b.id)]))
-      .then((entries) => setVotes(Object.fromEntries(entries)))
-      .catch((err) => console.error('Failed to fetch votes:', err))
-  }, [bills])
+  // Votes load lazily for bills that scroll into view, batched into one round
+  const requested = useRef(new Set())
+  const queue = useRef(new Set())
+  const flushTimer = useRef(0)
+  const userRef = useRef(null)
+  useEffect(() => { userRef.current = user }, [user])
 
-  // This user's own votes
+  const flushVotes = useCallback(() => {
+    flushTimer.current = 0
+    const ids = [...queue.current]
+    queue.current.clear()
+    if (ids.length === 0) return
+    Promise.all(ids.map(async (id) => [id, await getBillVotes(id)]))
+      .then((entries) => setVotes((prev) => ({ ...prev, ...Object.fromEntries(entries) })))
+      .catch((err) => console.error('Failed to fetch votes:', err))
+    const u = userRef.current
+    if (u) {
+      Promise.all(ids.map(async (id) => [id, await getUserVote(u.uid, id)]))
+        .then((entries) => setUserVotes((prev) => ({ ...prev, ...Object.fromEntries(entries) })))
+        .catch((err) => console.error('Failed to fetch your votes:', err))
+    }
+  }, [])
+
+  const requestVotes = useCallback((ids) => {
+    for (const id of Array.isArray(ids) ? ids : [ids]) {
+      if (requested.current.has(id)) continue
+      requested.current.add(id)
+      queue.current.add(id)
+    }
+    if (queue.current.size && !flushTimer.current) flushTimer.current = setTimeout(flushVotes, 60)
+  }, [flushVotes])
+
+  // When someone signs in, fetch their votes for everything already on screen
   useEffect(() => {
-    if (!user || bills.length === 0) return
-    Promise.all(bills.map(async (b) => [b.id, await getUserVote(user.uid, b.id)]))
+    if (!user || requested.current.size === 0) return
+    const ids = [...requested.current]
+    Promise.all(ids.map(async (id) => [id, await getUserVote(user.uid, id)]))
       .then((entries) => setUserVotes(Object.fromEntries(entries)))
-      .catch((err) => console.error('Failed to fetch user votes:', err))
-  }, [user, bills])
+      .catch((err) => console.error('Failed to fetch your votes:', err))
+  }, [user])
 
   // Auth + watchlist
   useEffect(() => {
@@ -123,6 +178,31 @@ export default function App() {
 
   const notify = useCallback((message) => setToast({ message, key: Date.now() }), [])
 
+  // Header state: shrink once the page scrolls, highlight the section in view
+  useEffect(() => {
+    const el = sentinel.current
+    if (!el) return
+    const io = new IntersectionObserver(([e]) => setScrolled(!e.isIntersecting))
+    io.observe(el)
+    return () => io.disconnect()
+  }, [])
+
+  useEffect(() => {
+    if (route.name !== 'home') return
+    const els = HOME_SECTIONS.map((id) => document.getElementById(id)).filter(Boolean)
+    const visible = new Map()
+    const io = new IntersectionObserver((entries) => {
+      for (const e of entries) visible.set(e.target.id, e.isIntersecting)
+      setSection(HOME_SECTIONS.find((id) => visible.get(id)) || null)
+    }, { rootMargin: '-45% 0px -45% 0px' })
+    els.forEach((el) => io.observe(el))
+    return () => io.disconnect()
+  }, [route.name, loading])
+
+  const active = route.name === 'home' ? section
+    : route.name === 'bill' ? 'bills'
+    : route.name
+
   // Remember where the visitor was on the home page before opening a bill,
   // and make same-hash section links (#/bills twice) still scroll.
   useEffect(() => {
@@ -132,16 +212,26 @@ export default function App() {
       const href = a.getAttribute('href')
       if (route.name === 'home' && href.startsWith('#/bill/')) homeScroll.current = window.scrollY
       if (href === window.location.hash) {
-        const section = href.match(/^#\/(bills|how)$/)?.[1]
-        if (section) {
+        const id = href.match(/^#\/(new|bills|how)$/)?.[1]
+        if (id) {
           e.preventDefault()
-          document.getElementById(section)?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth' })
+          document.getElementById(id)?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth' })
         }
       }
     }
     document.addEventListener('click', onClick)
     return () => document.removeEventListener('click', onClick)
   }, [route.name, reduce])
+
+  // Book click: play the opening animation, then navigate
+  const openBook = useCallback((bill, rect) => {
+    if (route.name === 'home') homeScroll.current = window.scrollY
+    if (reduce) {
+      window.location.hash = billHref(bill.id)
+      return
+    }
+    setOpening({ bill, rect, key: Date.now() })
+  }, [reduce, route.name])
 
   // Scroll position on navigation
   const routeKey = route.name === 'bill' ? `bill:${route.id}` : route.name
@@ -156,8 +246,7 @@ export default function App() {
           document.getElementById(route.section)?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth' })
         )
       } else {
-        window.scrollTo(0, homeScroll.current)
-        homeScroll.current = 0
+        window.scrollTo(0, 0)
       }
     } else {
       window.scrollTo(0, 0)
@@ -172,6 +261,8 @@ export default function App() {
       document.title = b ? `${clean(b.plain_title)} | CivicLens` : base
     } else if (route.name === 'watchlist') {
       document.title = 'Your watchlist | CivicLens'
+    } else if (route.name === 'about') {
+      document.title = 'About | CivicLens'
     } else {
       document.title = base
     }
@@ -230,26 +321,30 @@ export default function App() {
   const savedIds = useMemo(() => new Set(savedBills.map((b) => b.id)), [savedBills])
 
   const ctx = useMemo(() => ({
-    user, votes, userVotes, savedIds,
+    user, votes, userVotes, savedIds, requestVotes, openBook,
     onVote: handleVote, onSave: handleSave, onUnsave: handleUnsave, onRequireSignIn: requireSignIn,
-  }), [user, votes, userVotes, savedIds, handleVote, handleSave, handleUnsave, requireSignIn])
+  }), [user, votes, userVotes, savedIds, requestVotes, openBook, handleVote, handleSave, handleUnsave, requireSignIn])
 
   let page
   if (route.name === 'bill') {
     page = <BillPage id={route.id} bills={bills} savedBills={savedBills} loading={loading} ctx={ctx} />
   } else if (route.name === 'watchlist') {
     page = <Watchlist bills={bills} savedBills={savedBills} ctx={ctx} />
+  } else if (route.name === 'about') {
+    page = <About billCount={bills.length} />
   } else {
     page = <Home bills={bills} loading={loading} error={loadError} onRetry={retry} theme={theme} ctx={ctx} />
   }
 
   return (
     <div className="app">
+      <div ref={sentinel} className="scroll-sentinel" aria-hidden="true" />
       <a href="#main" className="skip-link" onClick={(e) => { e.preventDefault(); document.getElementById('main')?.focus() }}>
         Skip to content
       </a>
       <Header
-        route={route}
+        active={active}
+        scrolled={scrolled}
         user={user}
         savedCount={savedIds.size}
         theme={theme}
@@ -267,7 +362,15 @@ export default function App() {
       >
         {page}
       </motion.main>
-      <Footer user={user} />
+      <Footer user={user} bills={bills} />
+      {opening && (
+        <BookOpener
+          key={opening.key}
+          opening={opening}
+          onNavigate={() => { window.location.hash = billHref(opening.bill.id) }}
+          onDone={() => setOpening(null)}
+        />
+      )}
       <div className="toast-region" aria-live="polite">
         {toast && <div className="toast" key={toast.key}>{toast.message}</div>}
       </div>

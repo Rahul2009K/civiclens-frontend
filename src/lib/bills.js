@@ -15,6 +15,18 @@ export const TOPIC_PALETTES = {
   Other:              { bg: '#5d5751', a: '#ebe4d9', b: '#2a2624', ink: '#f4efe8' },
 }
 
+// Cover photo per topic (see About > Credits). Files live in public/covers.
+const COVER_FILES = {
+  Education: 'education', Immigration: 'immigration', Healthcare: 'healthcare',
+  Climate: 'climate', Economy: 'economy', 'Civil Rights': 'civil-rights',
+  'Criminal Justice': 'criminal-justice', Technology: 'technology',
+  'Foreign Policy': 'foreign-policy', Other: 'other',
+}
+
+export function coverFor(bill) {
+  return `/covers/${COVER_FILES[primaryTopic(bill)] || 'other'}.webp`
+}
+
 export function primaryTopic(bill) {
   const topics = bill?.topics || []
   return topics.find((t) => t !== 'Other' && TOPIC_PALETTES[t]) || topics[0] || 'Other'
@@ -53,6 +65,15 @@ export function billFacts(bill) {
 // Where a bill sits in the process, read from the plain-English status.
 export const STAGES = ['Introduced', 'In committee', 'Floor vote', 'Other chamber', 'Law']
 
+// Civics 101: what each step actually means
+export const STAGE_HELP = [
+  'A member of Congress formally proposed the bill and it got a number, like H.R. 5744.',
+  'A small group of lawmakers who specialize in the topic studies the bill. Most bills never leave committee.',
+  'The bill is scheduled for debate and a vote by the full House or Senate.',
+  'One chamber passed it. The other chamber (House or Senate) now has to pass the same text.',
+  'Both chambers passed it and the President signed it, so it is now federal law.',
+]
+
 export function stageOf(bill) {
   const s = (bill?.status_plain_english || '').toLowerCase()
   if (/signed into law|law of the land|became (a )?law|now (official )?(u\.s\. )?law/.test(s)) return 4
@@ -88,4 +109,30 @@ export function rng(seed) {
     t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296
   }
+}
+
+// "Sen. Bennet, Michael F. [D-CO]" -> "Sen. Michael F. Bennet (D-CO)"
+export function sponsorName(sponsor) {
+  if (!sponsor?.name) return null
+  const m = sponsor.name.match(/^(Sen\.|Rep\.|Del\.|Resident Commissioner)\s+([^,]+),\s*([^[]+?)\s*\[([^\]]+)\]$/)
+  if (!m) return sponsor.name
+  // Non-breaking hyphen keeps "(D-CO)" on one line
+  return `${m[1]} ${m[3]} ${m[2]} (${m[4].replace(/-/g, '‑')})`
+}
+
+const DATE_FMT = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })
+
+export function formatDate(iso) {
+  if (!iso) return null
+  const d = new Date(iso.length === 10 ? `${iso}T00:00:00Z` : iso)
+  return Number.isNaN(d.getTime()) ? null : DATE_FMT.format(d)
+}
+
+export function newestUpdate(bills) {
+  let best = null
+  for (const b of bills) {
+    const d = b.update_date || b.latest_action_date
+    if (d && (!best || d > best)) best = d
+  }
+  return best
 }

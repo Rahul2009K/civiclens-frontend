@@ -1,11 +1,11 @@
 import { ArrowRightIcon } from '@phosphor-icons/react'
 import ParticleCapitol from '../components/ParticleCapitol'
-import BillStack from '../components/BillStack'
+import Bookshelf from '../components/Bookshelf'
 import BillIndex from '../components/BillIndex'
 import Reveal from '../components/Reveal'
 
 export default function Home({ bills, loading, error, onRetry, theme, ctx }) {
-  const newest = bills.slice(0, 6)
+  const newest = bills.slice(0, 10)
 
   return (
     <>
@@ -17,7 +17,7 @@ export default function Home({ bills, loading, error, onRetry, theme, ctx }) {
               Congress, in <em>plain English.</em>
             </h1>
             <p className="hero-sub">
-              New bills from the 119th Congress, rewritten by Claude so anyone can follow what lawmakers are proposing.
+              The {bills.length || 100} newest bills in the 119th Congress, rewritten by Claude so anyone can follow what lawmakers are proposing.
             </p>
             <div className="hero-ctas">
               <a href="#/bills" className="btn btn-primary btn-lg">
@@ -32,21 +32,19 @@ export default function Home({ bills, loading, error, onRetry, theme, ctx }) {
         </div>
       </section>
 
-      <section className="section stack-section" aria-labelledby="stack-heading">
-        <div className="container stack-layout">
-          <Reveal className="stack-copy">
-            <h2 id="stack-heading" className="section-title">Just in from Congress.</h2>
+      <section id="new" className="section shelf-section" aria-labelledby="shelf-heading">
+        <div className="container">
+          <Reveal className="shelf-head">
+            <h2 id="shelf-heading" className="section-title">Just in from Congress.</h2>
             <p className="section-lede">
-              The six newest bills on the docket. Pick one off the stack to read it.
+              The ten newest bills, fresh off the floor. Pull one off the shelf to open it.
             </p>
           </Reveal>
-          <div className="stack-holder">
-            {loading || error || newest.length === 0 ? (
-              <div className="stack-placeholder" aria-hidden="true" />
-            ) : (
-              <BillStack bills={newest} />
-            )}
-          </div>
+          {loading || error || newest.length === 0 ? (
+            <div className="shelf-placeholder" aria-hidden="true" />
+          ) : (
+            <Bookshelf bills={newest} ctx={ctx} />
+          )}
         </div>
       </section>
 

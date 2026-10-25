@@ -6,7 +6,8 @@ import { useEffect, useRef } from 'react'
 
 const PALETTES = {
   dark: { inks: ['#f6efe4', '#ffd2b8', '#ff9a6b', '#ff7a45'], blend: 'lighter', star: '255,240,228' },
-  light: { inks: ['#1d191b', '#4b3a33', '#a8461f', '#d2531f'], blend: 'source-over', star: '40,30,30' },
+  // Light mode: dense ink with ember accents, set against a low sun so the dome reads clearly
+  light: { inks: ['#151012', '#3b2a24', '#b23f16', '#e2602a'], blend: 'source-over', star: '120,60,40', scale: 1.35, sun: true },
 }
 
 function drawCapitol(ctx, W, H) {
@@ -117,6 +118,7 @@ export default function ParticleCapitol({ theme = 'dark' }) {
     let W = 0, H = 0, dpr = 1, count = 0
     let px, py, vx, vy, tx, ty, ink, phase, size
     let stars = []
+    let shape = { top: 0, bottom: 0 }
     let raf = 0
     let running = false
     let visible = true
@@ -135,6 +137,7 @@ export default function ParticleCapitol({ theme = 'dark' }) {
       const prev = count
       count = Math.round(Math.min(7500, Math.max(1800, (W * H) / 52)))
       const { targets, top, bottom } = sampleTargets(W, H, count)
+      shape = { top, bottom }
       const fresh = prev !== count || !px
       if (fresh) {
         px = new Float32Array(count); py = new Float32Array(count)
@@ -172,6 +175,21 @@ export default function ParticleCapitol({ theme = 'dark' }) {
     function draw(now) {
       const pal = PALETTES[themeRef.current] || PALETTES.dark
       ctx.clearRect(0, 0, W, H)
+      if (pal.sun) {
+        // A warm low sun behind the dome
+        const span = shape.bottom - shape.top
+        const sx = W / 2
+        const sy = shape.top + span * 0.42
+        const sr = span * 0.62
+        const g = ctx.createRadialGradient(sx, sy, sr * 0.1, sx, sy, sr)
+        g.addColorStop(0, 'rgba(240,110,52,0.42)')
+        g.addColorStop(0.55, 'rgba(240,110,52,0.16)')
+        g.addColorStop(1, 'rgba(240,110,52,0)')
+        ctx.fillStyle = g
+        ctx.beginPath()
+        ctx.arc(sx, sy, sr, 0, Math.PI * 2)
+        ctx.fill()
+      }
       for (const s of stars) {
         const a = reduce ? 0.35 : 0.2 + 0.25 * Math.sin(now * 0.0011 + s.p)
         ctx.fillStyle = `rgba(${pal.star},${a.toFixed(3)})`
@@ -180,10 +198,11 @@ export default function ParticleCapitol({ theme = 'dark' }) {
       ctx.globalCompositeOperation = pal.blend
       for (let c = 0; c < pal.inks.length; c++) {
         ctx.fillStyle = pal.inks[c]
-        ctx.globalAlpha = c === 0 ? 0.92 : 0.85
+        ctx.globalAlpha = pal.sun ? 0.95 : c === 0 ? 0.92 : 0.85
+        const k = pal.scale || 1
         for (let i = 0; i < count; i++) {
           if (ink[i] !== c) continue
-          ctx.fillRect(px[i], py[i], size[i], size[i])
+          ctx.fillRect(px[i], py[i], size[i] * k, size[i] * k)
         }
       }
       ctx.globalAlpha = 1

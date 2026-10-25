@@ -1,16 +1,102 @@
-import { useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import CoverArt from './CoverArt'
 import { ScalesMark } from './Brand'
-import { billFacts, clean, paletteFor, primaryTopic } from '../lib/bills'
+import { billFacts, clean, coverFor, paletteFor, primaryTopic, rng, seedFrom } from '../lib/bills'
 
-// A bill rendered as a physical hardcover: front, spine and page edges in CSS 3D.
-// size="lg" adds the title plate and follows the pointer.
+// Per-bill crop of the topic photo, so two Healthcare books never look identical
+function photoCrop(id) {
+  const r = rng(seedFrom(`${id}-crop`))
+  return {
+    backgroundPosition: `${Math.round(20 + r() * 60)}% ${Math.round(25 + r() * 50)}%`,
+    backgroundSize: `${Math.round(115 + r() * 45)}%`,
+  }
+}
+
+export function BookFront({ bill, showTitle }) {
+  const palette = paletteFor(bill)
+  const facts = billFacts(bill)
+  return (
+    <>
+      <div className="book-photo" style={{ backgroundImage: `url(${coverFor(bill)})`, ...photoCrop(bill.id) }} />
+      <div className="book-tint" />
+      <div className="book-band">
+        <CoverArt seed={bill.id} palette={palette} width={300} height={56} />
+      </div>
+      <div className="book-sheen" />
+      <span className="book-badge"><ScalesMark /></span>
+      <div className="book-plate">
+        <span className="book-plate-label">{facts.label}</span>
+        {showTitle && <span className="book-plate-title">{clean(bill.plain_title)}</span>}
+        <span className="book-plate-topic">{primaryTopic(bill)}</span>
+      </div>
+    </>
+  )
+}
+
+function BookBack({ bill }) {
+  const facts = billFacts(bill)
+  return (
+    <div className="book-back-inner">
+      <span className="book-back-label">{facts.label}</span>
+      <p className="book-back-title">{clean(bill.plain_title)}</p>
+      <p className="book-back-text">{clean(bill.plain_summary)}</p>
+      <span className="book-back-brand"><ScalesMark /> CivicLens</span>
+    </div>
+  )
+}
+
+// Hover spin: rotate continuously, then ease back to the resting angle on leave.
+function useSpin(ref, enabled) {
+  useEffect(() => {
+    const el = ref.current
+    if (!enabled || !el) return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const host = el.closest('[data-spin-host]') || el.parentElement
+    let angle = 0
+    let raf = 0
+    let last = 0
+    let settling = false
+
+    const apply = () => { el.style.setProperty('--spin', `${angle}deg`) }
+    const tick = (now) => {
+      const dt = last ? Math.min(48, now - last) : 16
+      last = now
+      if (settling) {
+        // Glide forward to the next full turn so it lands face-out
+        const target = Math.ceil(angle / 360) * 360
+        angle += Math.max(0.6, (target - angle) * 0.12)
+        if (angle >= target - 0.5) { angle = 0; apply(); raf = 0; return }
+      } else {
+        angle += dt * 0.11
+      }
+      apply()
+      raf = requestAnimationFrame(tick)
+    }
+    const start = () => { settling = false; last = 0; if (!raf) raf = requestAnimationFrame(tick) }
+    const stop = () => { settling = true; if (!raf) { last = 0; raf = requestAnimationFrame(tick) } }
+
+    host.addEventListener('pointerenter', start)
+    host.addEventListener('pointerleave', stop)
+    host.addEventListener('focusin', start)
+    host.addEventListener('focusout', stop)
+    return () => {
+      cancelAnimationFrame(raf)
+      host.removeEventListener('pointerenter', start)
+      host.removeEventListener('pointerleave', stop)
+      host.removeEventListener('focusin', start)
+      host.removeEventListener('focusout', stop)
+    }
+  }, [ref, enabled])
+}
+
+// A bill rendered as a physical hardcover in CSS 3D.
+// size: "sm" (grid, spins on hover), "lg" (bill page, follows pointer), "shelf" (spine out)
 export default function Book({ bill, size = 'sm' }) {
   const ref = useRef(null)
   const palette = paletteFor(bill)
   const facts = billFacts(bill)
-  const topic = primaryTopic(bill)
   const lg = size === 'lg'
+  useSpin(ref, size === 'sm')
 
   function onPointerMove(e) {
     if (!lg || e.pointerType === 'touch' || !ref.current) return
@@ -39,21 +125,16 @@ export default function Book({ bill, size = 'sm' }) {
         style={{ '--cover': palette.bg, '--cover-ink': palette.ink }}
       >
         <div className="book-face book-front">
-          <CoverArt seed={bill.id} palette={palette} className="book-art" />
-          <div className="book-sheen" />
-          <span className="book-badge"><ScalesMark /></span>
-          <div className="book-plate">
-            <span className="book-plate-label">{facts.label}</span>
-            {lg && <span className="book-plate-title">{clean(bill.plain_title)}</span>}
-            <span className="book-plate-topic">{topic}</span>
-          </div>
+          <BookFront bill={bill} showTitle={lg} />
         </div>
         <div className="book-face book-spine">
-          <span>{facts.label}</span>
+          <span className="book-spine-label">{facts.label}</span>
+          {size === 'shelf' && <span className="book-spine-title">{clean(bill.plain_title)}</span>}
           <ScalesMark className="book-spine-mark" />
         </div>
         <div className="book-face book-pages" />
-        <div className="book-face book-back" />
+        <div className="book-face book-back"><BookBack bill={bill} /></div>
+        <div className="book-face book-top" />
       </div>
       <div className="book-shadow" />
     </div>

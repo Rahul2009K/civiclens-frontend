@@ -1,10 +1,16 @@
-import { ArrowLeftIcon, ArrowRightIcon, ArrowUpRightIcon } from '@phosphor-icons/react'
+import { ArrowLeftIcon, ArrowRightIcon, ArrowUpRightIcon, FileTextIcon, InfoIcon } from '@phosphor-icons/react'
 import Book from '../components/Book'
 import StageTracker from '../components/StageTracker'
 import Reveal from '../components/Reveal'
 import { SaveButton, VoteButtons } from '../components/Actions'
-import { billFacts, clean, paletteFor, stageOf, TOPIC_PALETTES } from '../lib/bills'
+import { billFacts, clean, formatDate, paletteFor, sponsorName, stageOf, TOPIC_PALETTES } from '../lib/bills'
 import { billHref } from '../lib/useHashRoute'
+
+const SOURCE_NOTE = {
+  official_summary: 'Written from the official summary by the Congressional Research Service.',
+  bill_text: 'Congress has not published an official summary yet, so this was written from the full text of the bill.',
+  title_only: 'Congress has not published a summary or the bill text yet, so this is based on the title alone. Treat it as a preview.',
+}
 
 export default function BillPage({ id, bills, savedBills, loading, ctx }) {
   const index = bills.findIndex((b) => b.id === id)
@@ -39,6 +45,14 @@ export default function BillPage({ id, bills, savedBills, loading, ctx }) {
   const stage = stageOf(bill)
   const prev = index > 0 ? bills[index - 1] : null
   const next = index >= 0 && index < bills.length - 1 ? bills[index + 1] : null
+  const source = bill.source || (bill.title_only ? 'title_only' : null)
+  const sponsor = sponsorName(bill.sponsor)
+  const facts2 = [
+    ['Sponsor', sponsor],
+    ['Introduced', formatDate(bill.introduced_date)],
+    ['Latest action', formatDate(bill.latest_action_date)],
+    ['Cosponsors', bill.cosponsor_count !== undefined ? String(bill.cosponsor_count) : null],
+  ].filter(([, v]) => v)
 
   return (
     <article className="bill-page" style={{ '--tint': palette.bg }}>
@@ -62,6 +76,21 @@ export default function BillPage({ id, bills, savedBills, loading, ctx }) {
               ))}
             </div>
             <p className="bill-lede">{clean(bill.plain_summary)}</p>
+
+            {source && (
+              <p className={`source-note source-${source}`}>
+                {source === 'title_only' ? <InfoIcon weight="bold" /> : <FileTextIcon weight="bold" />}
+                {SOURCE_NOTE[source]}
+              </p>
+            )}
+
+            {facts2.length > 0 && (
+              <dl className="bill-facts">
+                {facts2.map(([k, v]) => (
+                  <div key={k}><dt>{k}</dt><dd>{v}</dd></div>
+                ))}
+              </dl>
+            )}
 
             <div className="bill-actions">
               <SaveButton
@@ -99,6 +128,13 @@ export default function BillPage({ id, bills, savedBills, loading, ctx }) {
               </ol>
             </Reveal>
 
+            {bill.why_it_matters && (
+              <Reveal as="section" className="bill-section why">
+                <h2>Why it matters to you</h2>
+                <p className="why-text">{clean(bill.why_it_matters)}</p>
+              </Reveal>
+            )}
+
             <Reveal as="section" className="bill-section">
               <h2>Who it affects</h2>
               <p className="bill-prose">{clean(bill.who_it_affects)}</p>
@@ -108,6 +144,11 @@ export default function BillPage({ id, bills, savedBills, loading, ctx }) {
               <h2>Where it stands</h2>
               <StageTracker stage={stage} />
               <p className="bill-prose">{clean(bill.status_plain_english)}</p>
+              {bill.latest_action_text && (
+                <p className="official-action">
+                  <span className="mono">Official record{bill.latest_action_date ? `, ${formatDate(bill.latest_action_date)}` : ''}:</span> {bill.latest_action_text}
+                </p>
+              )}
             </Reveal>
 
             {bill.original_title && (

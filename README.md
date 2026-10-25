@@ -1,16 +1,69 @@
-# React + Vite
+# CivicLens (website)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**Live:** https://civiclens-frontend-gilt.vercel.app
 
-Currently, two official plugins are available:
+CivicLens explains the 100 newest bills in the U.S. Congress in plain English, for high school students and anyone without a civics or legal background. Every bill gets a short summary, its key provisions, who it affects, why it matters to a young person, and where it stands in the lawmaking process.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+This repo is the website. The data pipeline and API live in [CivicLens](https://github.com/Rahul2009K/CivicLens).
 
-## React Compiler
+## Features
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Bookshelf of the newest bills.** The ten newest bills stand spine-out on a 3D shelf. Hover pulls one forward; clicking plays an animation where the book flies forward and opens.
+- **Every bill is a book.** Covers combine a photo for the bill's topic, tinted in that topic's color, with generated artwork that is unique to each bill. Hovering a book spins it to show the back cover summary.
+- **Bill pages** with the plain-English summary, key provisions, "why it matters to you", the sponsor, dates, a five-step progress tracker with a "how a bill becomes a law" explainer, and a link to the official text.
+- **Source labels.** Each summary says whether it was written from the official Congressional Research Service summary, the full bill text, or the title only.
+- **Search** by keyword or bill number, **filter** by topic, **sort** by newest or most liked.
+- **Google sign-in** to save bills to a watchlist and vote. Firestore rules allow one vote per account per bill.
+- Light and dark themes, works on phones, respects the "reduce motion" accessibility setting.
 
-## Expanding the ESLint configuration
+## How it works
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```
+Congress.gov API --> generate_cache.py --> Claude (structured JSON) --> bills_cache.json
+                                                                          |
+                     public/bills.json (instant first load) <-------------+
+                     Flask API on Render (/bills) <-----------------------+
+                                   |
+                    this React site on Vercel -- Firebase (sign-in, votes, watchlist)
+```
+
+The site renders from the bundled `public/bills.json` immediately, then swaps in the live API response. That way the free Render server's cold start never blocks a visitor.
+
+## Tech
+
+React 19, Vite, Motion (animation), Phosphor icons, self-hosted Newsreader and Geist fonts, Firebase Auth and Firestore. The particle Capitol and the 3D books are written from scratch with Canvas 2D and CSS 3D transforms. No 3D library is used.
+
+## Project layout
+
+```
+src/
+  App.jsx              routing, data loading, auth, votes, the book-opening animation
+  pages/               Home, BillPage, Watchlist, About
+  components/          Header, Bookshelf, Book, BookOpener, BillIndex, BillTile,
+                       ParticleCapitol, CoverArt, StageTracker, ...
+  lib/bills.js         bill numbers, stages, sponsors, dates, topic palettes
+  lib/useHashRoute.js  tiny hash router (#/bill/<id>, #/about, ...)
+  content/about.js     About page copy and photo credits
+  firebase.js          auth, watchlist and vote helpers
+firestore.rules        security rules (one vote per account per bill)
+public/covers/         topic cover photos (credits on the About page)
+public/bills.json      snapshot written by the backend's generate_cache.py
+```
+
+## Run locally
+
+```bash
+npm install
+npm run dev        # http://localhost:5173 (expects the API on http://localhost:5000)
+npm test           # unit tests (Vitest)
+npm run lint
+npm run build
+```
+
+Set `VITE_BACKEND_URL` to point at a different API. Production uses `.env.production`.
+
+Deploy Firestore rules with `npx firebase-tools deploy --only firestore:rules`.
+
+## Credits
+
+Bill data: [Congress.gov API](https://api.congress.gov/). Summaries: Claude by Anthropic. Cover photo credits are listed on the site's About page and in `src/content/about.js`.

@@ -1,0 +1,59 @@
+// About page copy. Edit freely: this is the creator's own story, in their own words.
+
+export const ABOUT = {
+  headline: 'Built by a student who wants to vote informed.',
+  intro:
+    "I'm Rahul, a high school student. CivicLens is my attempt to fix something I kept noticing: most people my age only hear about a law after it passes, usually from a headline or a thirty-second video.",
+
+  story: [
+    {
+      heading: 'Why I built it',
+      paragraphs: [
+        "Bills are long and written in legal language, so even curious people give up after the first paragraph. That leaves teenagers out of conversations about the things that shape our future: what college costs, which jobs exist, how the internet is regulated, what happens to the climate, who gets to call this country home.",
+        "Many of these bills don't affect me directly today. They will soon. In a few years my friends and I will be voters, and I want us to walk into that booth knowing what our representatives actually did, not just what they said.",
+      ],
+    },
+    {
+      heading: 'Where I come from',
+      paragraphs: [
+        "I'm a first-generation immigrant. I've seen how hard it is to follow American government when the language is dense and nobody explains the context. A lot of first-generation families learn the system one confusing form at a time.",
+        "CivicLens is the tool I wish my family and I had: something that explains what Congress is doing in words anyone can follow, without telling you what to think about it.",
+      ],
+    },
+  ],
+
+  accuracy: [
+    'Every bill comes straight from Congress.gov, the official record kept by the Library of Congress.',
+    'Claude, an AI model by Anthropic, rewrites each bill in plain English from the official summary or, when that is not published yet, from the full text of the bill itself. Every bill page says which one it used.',
+    'Summaries are written to be neutral. CivicLens never tells you whether a bill is good or bad.',
+    'AI can make mistakes, so every bill links to its official text. Check it before you cite a bill in class or an argument.',
+  ],
+
+  privacy: [
+    'You can read everything without an account.',
+    'Signing in with Google is only needed to save bills and vote. CivicLens stores your saved bills and your votes under an anonymous account ID.',
+    'Vote totals are public counts. Nobody can see how you voted.',
+    'The site uses Google Analytics to count visits. There are no ads and no data is sold.',
+  ],
+
+  builtWith: [
+    ['Congress.gov API', 'bill data, official summaries and full text'],
+    ['Claude (Anthropic)', 'plain-English summaries'],
+    ['Python + Flask', 'the API, hosted on Render'],
+    ['React + Vite', 'this website, hosted on Vercel'],
+    ['Firebase', 'Google sign-in, watchlists and votes'],
+  ],
+
+  credits: [
+    ['Criminal Justice cover', 'David Veksler', 'Unsplash', 'https://unsplash.com/photos/HpmDAS1Dozs'],
+    ['Foreign Policy cover', 'The Jopwell Collection', 'Unsplash', 'https://unsplash.com/photos/kvn38MTB2tg'],
+    ['Healthcare cover', 'Luis Melendez', 'Unsplash', 'https://unsplash.com/photos/Pd4lRfKo16U'],
+    ['Economy cover', 'Madison Kaminski', 'Unsplash', 'https://unsplash.com/photos/5fd2jdyGo-8'],
+    ['Climate cover', 'Urban Vintage', 'Unsplash', 'https://unsplash.com/photos/o0RZkkL072U'],
+    ['Technology cover', 'Immo Wegmann', 'Unsplash', 'https://unsplash.com/photos/w69Z8K-HGQU'],
+    ['Civil Rights cover', 'Library of Congress, via Unseen Histories', 'Unsplash', 'https://unsplash.com/photos/U2F-bYmuEqU'],
+    ['Other cover', 'Fine Photographics', 'Unsplash', 'https://unsplash.com/photos/I306rDlvTYY'],
+    ['Immigration cover', 'Yellowstone National Park (public domain)', 'Wikimedia Commons', 'https://commons.wikimedia.org/wiki/File:2024_Naturalization_Ceremony-_new_american_citizens_(54024451940).jpg'],
+    ['Education cover', 'Harrison Keely, CC BY 4.0', 'Wikimedia Commons', 'https://commons.wikimedia.org/wiki/File:Students_in_a_public_high_school_classroom_in_Hayesville,_North_Carolina.jpg'],
+  ],
+}

@@ -35,6 +35,12 @@ export default function BillIndex({ bills, loading, error, onRetry, ctx }) {
     return [...counts.entries()].sort((a, b) => (a[0] === 'Other') - (b[0] === 'Other') || b[1] - a[1])
   }, [bills])
 
+  // "Most liked" needs every bill's vote count, not just the ones on screen
+  const { requestVotes } = ctx
+  useEffect(() => {
+    if (sort === 'liked') requestVotes(bills.map((b) => b.id))
+  }, [sort, bills, requestVotes])
+
   const shown = useMemo(() => {
     const list = bills.filter((b) => (topic === 'All' || b.topics?.includes(topic)) && matches(b, q))
     if (sort === 'liked') {

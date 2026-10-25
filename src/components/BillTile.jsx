@@ -3,29 +3,44 @@ import { motion, useReducedMotion } from 'motion/react'
 import Book from './Book'
 import StageTracker from './StageTracker'
 import { SaveButton, VoteButtons } from './Actions'
-import { billFacts, clean, stageOf } from '../lib/bills'
+import { billFacts, clean, formatDate, stageOf } from '../lib/bills'
 import { billHref } from '../lib/useHashRoute'
+import { openOnClick } from '../lib/openBook'
 
 const BillTile = forwardRef(function BillTile({ bill, index = 0, ctx }, ref) {
   const reduce = useReducedMotion()
   const facts = billFacts(bill)
+  const date = formatDate(bill.latest_action_date)
 
   return (
     <motion.article
       ref={ref}
       className="tile"
       layout={!reduce}
-      initial={reduce ? false : { opacity: 0, y: 28 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.15 }}
       exit={reduce ? undefined : { opacity: 0, scale: 0.96, transition: { duration: 0.18 } }}
-      transition={{ type: 'spring', stiffness: 120, damping: 22, delay: reduce ? 0 : (index % 4) * 0.06 }}
+      onViewportEnter={() => ctx.requestVotes(bill.id)}
+      viewport={{ margin: '200px 0px' }}
     >
-      <a href={billHref(bill.id)} className="tile-link">
-        <Book bill={bill} />
+      <a
+        href={billHref(bill.id)}
+        className="tile-link"
+        data-spin-host
+        onClick={(e) => openOnClick(e, bill, ctx)}
+      >
+        {/* Pops back into place every time it scrolls into view */}
+        <motion.div
+          className="tile-book"
+          initial={reduce ? false : { opacity: 0, scale: 0.8, rotateY: -55, y: 36 }}
+          whileInView={{ opacity: 1, scale: 1, rotateY: 0, y: 0 }}
+          viewport={{ once: false, amount: 0.35 }}
+          transition={{ type: 'spring', stiffness: 210, damping: 16, mass: 0.9, delay: reduce ? 0 : (index % 4) * 0.05 }}
+        >
+          <Book bill={bill} />
+        </motion.div>
         <span className="tile-meta">
           <span className="mono">{facts.label}</span>
           <span className="tile-chamber">{facts.chamber}</span>
+          {date && <span className="tile-date">{date}</span>}
         </span>
         <span className="tile-title">{clean(bill.plain_title)}</span>
       </a>
