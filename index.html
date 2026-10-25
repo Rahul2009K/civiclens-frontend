@@ -1,14 +1,24 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>CivicLens — Congress, Explained</title>
+    <title>CivicLens: Congress in plain English</title>
+    <meta name="description" content="New bills from the U.S. Congress, rewritten in plain English so anyone can follow what lawmakers are proposing." />
+    <meta name="theme-color" content="#121011" />
+    <meta property="og:title" content="CivicLens: Congress in plain English" />
+    <meta property="og:description" content="New bills from the U.S. Congress, rewritten in plain English so anyone can follow what lawmakers are proposing." />
+    <meta property="og:type" content="website" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <script>
+      // Apply the saved theme before first paint to avoid a flash
+      try {
+        var t = localStorage.getItem('civiclens-theme');
+        if (t !== 'dark' && t !== 'light') t = matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {}
+    </script>
     <!-- Google tag (gtag.js) -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-5CZYLQ53PE"></script>
     <script>
       window.dataLayer = window.dataLayer || [];

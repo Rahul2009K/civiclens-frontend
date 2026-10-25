@@ -1,199 +1,87 @@
-import { useState, useEffect } from 'react'
-import './App.css'
-import { auth, signInWithGoogle, signOutUser, saveBill, unsaveBill, getSavedBills, getBillVotes, getUserVote, castVote } from './firebase'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { motion, useReducedMotion } from 'motion/react'
 import { onAuthStateChanged } from 'firebase/auth'
+import {
+  auth, signInWithGoogle, signOutUser, saveBill, unsaveBill,
+  getSavedBills, getBillVotes, getUserVote, castVote,
+} from './firebase'
+import Header from './components/Header'
+import Footer from './components/Footer'
+import Home from './pages/Home'
+import BillPage from './pages/BillPage'
+import Watchlist from './pages/Watchlist'
+import { clean } from './lib/bills'
+import { useHashRoute } from './lib/useHashRoute'
 
-const TOPIC_COLORS = {
-  'Education': 'topic-blue',
-  'Immigration': 'topic-coral',
-  'Healthcare': 'topic-teal',
-  'Climate': 'topic-green',
-  'Economy': 'topic-amber',
-  'Civil Rights': 'topic-purple',
-  'Criminal Justice': 'topic-red',
-  'Technology': 'topic-pink',
-  'Foreign Policy': 'topic-gray',
-  'Other': 'topic-gray',
+// Accept the backend URL with or without "/bills" on the end
+const API_BASE = (import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000')
+  .replace(/\/+$/, '')
+  .replace(/\/bills$/, '')
+
+function initialTheme() {
+  try {
+    const saved = localStorage.getItem('civiclens-theme')
+    if (saved === 'dark' || saved === 'light') return saved
+  } catch { /* storage blocked */ }
+  return window.matchMedia?.('(prefers-color-scheme: light)').matches ? 'light' : 'dark'
 }
 
-function getTopicClass(topic) {
-  return TOPIC_COLORS[topic] || 'topic-gray'
-}
+export default function App() {
+  const route = useHashRoute()
+  const reduce = useReducedMotion()
 
-function ScalesIcon({ className }) {
-  return (
-    <svg className={className} viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <path d="M32 6c-4.5 0-7.8 2.4-7.8 2.4S28 11.4 32 11.4s7.8-2.6 7.8-2.6S36.5 6 32 6Z" fill="currentColor" />
-      <path d="M32 6v46" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
-      <path d="M13 15h38" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
-      <circle cx="32" cy="15" r="3.2" fill="currentColor" />
-      <g strokeWidth="2" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" fill="none">
-        <path d="M13 15 4 34" />
-        <path d="M13 15l9 19" />
-        <path d="M3 34c0 5 4.5 9 10 9s10-4 10-9" />
-        <path d="M51 15l-9 19" />
-        <path d="M51 15l9 19" />
-        <path d="M41 34c0 5 4.5 9 10 9s10-4 10-9" />
-      </g>
-      <path d="M20 57h24M32 52v5" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
-      <path d="M21.5 51h21l-3 6h-15Z" fill="currentColor" />
-    </svg>
-  )
-}
-
-function Masthead() {
-  return (
-    <header className="site-masthead">
-      <div className="site-masthead-inner">
-        <ScalesIcon className="masthead-icon" />
-        <div className="masthead-text">
-          <h1>CivicLens</h1>
-          <p className="tagline">Congress, explained in plain English</p>
-        </div>
-      </div>
-    </header>
-  )
-}
-
-function BackgroundEmblems() {
-  return (
-    <>
-      <ScalesIcon className="bg-scales bg-scales-1" />
-      <ScalesIcon className="bg-scales bg-scales-2" />
-    </>
-  )
-}
-
-function VoteButtons({ bill, user, votes, userVote, onVote }) {
-  return (
-    <div className="vote-buttons">
-      <button
-        className={userVote === 'like' ? 'vote-btn liked' : 'vote-btn'}
-        onClick={(e) => { e.stopPropagation(); user && onVote(bill.id, 'like') }}
-        disabled={!user}
-        title={user ? '' : 'Sign in to vote'}
-      >
-        👍 {votes.likes || 0}
-      </button>
-      <button
-        className={userVote === 'dislike' ? 'vote-btn disliked' : 'vote-btn'}
-        onClick={(e) => { e.stopPropagation(); user && onVote(bill.id, 'dislike') }}
-        disabled={!user}
-        title={user ? '' : 'Sign in to vote'}
-      >
-        👎 {votes.dislikes || 0}
-      </button>
-    </div>
-  )
-}
-
-function BillDetail({ bill, onBack, user, savedIds, onSave, onUnsave }) {
-  const isSaved = savedIds.has(bill.id)
-
-  return (
-    <div className="detail-page">
-      <button className="back-btn" onClick={onBack}>← Back to all bills</button>
-      <div className="topic-tags">
-        {bill.topics?.map((topic) => (
-          <span key={topic} className={`tag ${getTopicClass(topic)}`}>{topic}</span>
-        ))}
-      </div>
-      <h1>{bill.plain_title}</h1>
-
-      {user && (
-        <button
-          className={isSaved ? 'save-btn saved' : 'save-btn'}
-          onClick={() => isSaved ? onUnsave(bill.id) : onSave(bill)}
-        >
-          {isSaved ? '★ Saved' : '☆ Save this bill'}
-        </button>
-      )}
-
-      <p className="summary">{bill.plain_summary}</p>
-
-      <div className="detail-section">
-        <h3>Key Provisions</h3>
-        <ul>
-          {bill.key_provisions?.map((p, i) => (
-            <li key={i}>{p}</li>
-          ))}
-        </ul>
-      </div>
-
-      <div className="detail-section">
-        <h3>Who It Affects</h3>
-        <p>{bill.who_it_affects}</p>
-      </div>
-
-      <div className="detail-section">
-        <h3>Current Status</h3>
-        <p className="status">{bill.status_plain_english}</p>
-      </div>
-    </div>
-  )
-}
-
-function BillCard({ bill, onClick, user, savedIds, onSave, onUnsave, votes, userVote, onVote }) {
-  const isSaved = savedIds.has(bill.id)
-
-  return (
-    <div className="bill-card">
-      <div className="bill-card-header" onClick={() => onClick(bill)}>
-        <div className="topic-tags">
-          {bill.topics?.map((topic) => (
-            <span key={topic} className={`tag ${getTopicClass(topic)}`}>{topic}</span>
-          ))}
-        </div>
-        <h2>{bill.plain_title}</h2>
-        <p className="summary">{bill.plain_summary}</p>
-        <p className="status">{bill.status_plain_english}</p>
-        <p className="read-more">Read more →</p>
-      </div>
-      {user && (
-        <button
-          className={isSaved ? 'save-btn-small saved' : 'save-btn-small'}
-          onClick={(e) => {
-            e.stopPropagation()
-            isSaved ? onUnsave(bill.id) : onSave(bill)
-          }}
-        >
-          {isSaved ? '★ Saved' : '☆ Save'}
-        </button>
-      )}
-      <VoteButtons
-        bill={bill}
-        user={user}
-        votes={votes || { likes: 0, dislikes: 0 }}
-        userVote={userVote}
-        onVote={onVote}
-      />
-    </div>
-  )
-}
-
-function App() {
   const [bills, setBills] = useState([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState(false)
-  const [slowLoad, setSlowLoad] = useState(false)
-  const [activeFilter, setActiveFilter] = useState('All')
-  const [searchQuery, setSearchQuery] = useState('')
-  const [selectedBill, setSelectedBill] = useState(null)
+  const [attempt, setAttempt] = useState(0)
+
   const [user, setUser] = useState(null)
-  const [savedIds, setSavedIds] = useState(new Set())
-  const [showWatchlist, setShowWatchlist] = useState(false)
   const [savedBills, setSavedBills] = useState([])
-  const [darkMode, setDarkMode] = useState(() => {
-    return localStorage.getItem('civiclens-theme') === 'dark'
-  })
   const [votes, setVotes] = useState({})
   const [userVotes, setUserVotes] = useState({})
+  const [theme, setTheme] = useState(initialTheme)
+  const [toast, setToast] = useState(null)
 
+  const homeScroll = useRef(0)
+
+  // Theme
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light')
-    localStorage.setItem('civiclens-theme', darkMode ? 'dark' : 'light')
-  }, [darkMode])
+    document.documentElement.setAttribute('data-theme', theme)
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#121011' : '#f2f1ee')
+    try { localStorage.setItem('civiclens-theme', theme) } catch { /* storage blocked */ }
+  }, [theme])
 
+  // Bills
+  useEffect(() => {
+    let cancelled = false
+    fetch(`${API_BASE}/bills`)
+      .then((res) => {
+        if (!res.ok) throw new Error(`Server responded ${res.status}`)
+        return res.json()
+      })
+      .then((data) => {
+        if (!Array.isArray(data)) throw new Error('Unexpected response format')
+        if (cancelled) return
+        setBills(data)
+        setLoadError(false)
+        setLoading(false)
+      })
+      .catch((err) => {
+        console.error('Failed to fetch bills:', err)
+        if (cancelled) return
+        setLoadError(true)
+        setLoading(false)
+      })
+    return () => { cancelled = true }
+  }, [attempt])
+
+  const retry = useCallback(() => {
+    setLoading(true)
+    setLoadError(false)
+    setAttempt((n) => n + 1)
+  }, [])
+
+  // Vote totals
   useEffect(() => {
     if (bills.length === 0) return
     Promise.all(bills.map(async (b) => [b.id, await getBillVotes(b.id)]))
@@ -201,6 +89,7 @@ function App() {
       .catch((err) => console.error('Failed to fetch votes:', err))
   }, [bills])
 
+  // This user's own votes
   useEffect(() => {
     if (!user || bills.length === 0) return
     Promise.all(bills.map(async (b) => [b.id, await getUserVote(user.uid, b.id)]))
@@ -208,225 +97,181 @@ function App() {
       .catch((err) => console.error('Failed to fetch user votes:', err))
   }, [user, bills])
 
+  // Auth + watchlist
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+    return onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser)
-      if (!currentUser) setUserVotes({})
-      if (currentUser) {
-        const saved = await getSavedBills(currentUser.uid)
-        setSavedBills(saved)
-        setSavedIds(new Set(saved.map(b => b.id)))
-      } else {
+      if (!currentUser) {
+        setUserVotes({})
         setSavedBills([])
-        setSavedIds(new Set())
+        return
+      }
+      try {
+        setSavedBills(await getSavedBills(currentUser.uid))
+      } catch (err) {
+        console.error('Failed to load watchlist:', err)
       }
     })
-    return () => unsubscribe()
   }, [])
 
+  // Toast auto-dismiss
   useEffect(() => {
-    // Accept the backend URL with or without "/bills" on the end
-    const apiBase = (import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000').replace(/\/+$/, '').replace(/\/bills$/, '')
-    // The free backend sleeps when idle; tell people if it's waking up
-    const slowTimer = setTimeout(() => setSlowLoad(true), 4000)
-    fetch(`${apiBase}/bills`)
-      .then((res) => {
-        if (!res.ok) throw new Error(`Server responded ${res.status}`)
-        return res.json()
-      })
-      .then((data) => {
-        if (!Array.isArray(data)) throw new Error('Unexpected response format')
-        setBills(data)
-        setLoading(false)
-      })
-      .catch((err) => {
-        console.error('Failed to fetch bills:', err)
-        setLoadError(true)
-        setLoading(false)
-      })
-      .finally(() => clearTimeout(slowTimer))
-  }, [])
+    if (!toast) return
+    const t = setTimeout(() => setToast(null), 3600)
+    return () => clearTimeout(t)
+  }, [toast])
 
+  const notify = useCallback((message) => setToast({ message, key: Date.now() }), [])
+
+  // Remember where the visitor was on the home page before opening a bill,
+  // and make same-hash section links (#/bills twice) still scroll.
   useEffect(() => {
-    window.scrollTo(0, 0)
-  }, [selectedBill])
+    function onClick(e) {
+      const a = e.target.closest?.('a[href^="#/"]')
+      if (!a || e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return
+      const href = a.getAttribute('href')
+      if (route.name === 'home' && href.startsWith('#/bill/')) homeScroll.current = window.scrollY
+      if (href === window.location.hash) {
+        const section = href.match(/^#\/(bills|how)$/)?.[1]
+        if (section) {
+          e.preventDefault()
+          document.getElementById(section)?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth' })
+        }
+      }
+    }
+    document.addEventListener('click', onClick)
+    return () => document.removeEventListener('click', onClick)
+  }, [route.name, reduce])
 
-  async function handleSave(bill) {
+  // Scroll position on navigation
+  const routeKey = route.name === 'bill' ? `bill:${route.id}` : route.name
+  useLayoutEffect(() => {
+    if (route.name === 'home') {
+      // Coming back from a bill: return to the exact spot the visitor left
+      if (homeScroll.current > 0) {
+        window.scrollTo(0, homeScroll.current)
+        homeScroll.current = 0
+      } else if (route.section) {
+        requestAnimationFrame(() =>
+          document.getElementById(route.section)?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth' })
+        )
+      } else {
+        window.scrollTo(0, homeScroll.current)
+        homeScroll.current = 0
+      }
+    } else {
+      window.scrollTo(0, 0)
+    }
+  }, [routeKey, route.section]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Document title
+  useEffect(() => {
+    const base = 'CivicLens: Congress in plain English'
+    if (route.name === 'bill') {
+      const b = bills.find((x) => x.id === route.id) || savedBills.find((x) => x.id === route.id)
+      document.title = b ? `${clean(b.plain_title)} | CivicLens` : base
+    } else if (route.name === 'watchlist') {
+      document.title = 'Your watchlist | CivicLens'
+    } else {
+      document.title = base
+    }
+  }, [route, bills, savedBills])
+
+  const handleSignIn = useCallback(async () => {
+    try {
+      await signInWithGoogle()
+    } catch (err) {
+      if (err?.code !== 'auth/popup-closed-by-user' && err?.code !== 'auth/cancelled-popup-request') {
+        console.error('Sign-in failed:', err)
+        notify('Sign-in didn’t go through. Please try again.')
+      }
+    }
+  }, [notify])
+
+  const requireSignIn = useCallback(() => {
+    notify('Sign in to vote and save bills.')
+    handleSignIn()
+  }, [handleSignIn, notify])
+
+  const handleSave = useCallback(async (bill) => {
     if (!user) return
-    await saveBill(user.uid, bill)
-    setSavedIds(prev => new Set([...prev, bill.id]))
-    setSavedBills(prev => [...prev, bill])
-  }
+    try {
+      await saveBill(user.uid, bill)
+      setSavedBills((prev) => (prev.some((b) => b.id === bill.id) ? prev : [...prev, bill]))
+    } catch (err) {
+      console.error('Failed to save bill:', err)
+      notify('Couldn’t save that bill. Please try again.')
+    }
+  }, [user, notify])
 
-  async function handleUnsave(billId) {
+  const handleUnsave = useCallback(async (billId) => {
     if (!user) return
-    await unsaveBill(user.uid, billId)
-    setSavedIds(prev => {
-      const next = new Set(prev)
-      next.delete(billId)
-      return next
-    })
-    setSavedBills(prev => prev.filter(b => b.id !== billId))
-  }
+    try {
+      await unsaveBill(user.uid, billId)
+      setSavedBills((prev) => prev.filter((b) => b.id !== billId))
+    } catch (err) {
+      console.error('Failed to remove bill:', err)
+      notify('Couldn’t remove that bill. Please try again.')
+    }
+  }, [user, notify])
 
-  async function handleVote(billId, voteType) {
+  const handleVote = useCallback(async (billId, voteType) => {
     if (!user) return
     try {
       const result = await castVote(user.uid, billId, voteType)
-      setVotes(prev => ({ ...prev, [billId]: { likes: result.likes, dislikes: result.dislikes } }))
-      setUserVotes(prev => ({ ...prev, [billId]: result.userVote }))
+      setVotes((prev) => ({ ...prev, [billId]: { likes: result.likes, dislikes: result.dislikes } }))
+      setUserVotes((prev) => ({ ...prev, [billId]: result.userVote }))
     } catch (err) {
       console.error('Failed to cast vote:', err)
+      notify('Your vote didn’t go through. Please try again.')
     }
-  }
+  }, [user, notify])
 
-  const allTopics = ['All', ...new Set(bills.flatMap((b) => b.topics || []))]
+  const savedIds = useMemo(() => new Set(savedBills.map((b) => b.id)), [savedBills])
 
-  const filteredBills = bills.filter((b) => {
-    const matchesTopic = activeFilter === 'All' || b.topics?.includes(activeFilter)
-    const query = searchQuery.trim().toLowerCase()
-    const matchesSearch = query === '' ||
-      b.plain_title?.toLowerCase().includes(query) ||
-      b.plain_summary?.toLowerCase().includes(query)
-    return matchesTopic && matchesSearch
-  })
+  const ctx = useMemo(() => ({
+    user, votes, userVotes, savedIds,
+    onVote: handleVote, onSave: handleSave, onUnsave: handleUnsave, onRequireSignIn: requireSignIn,
+  }), [user, votes, userVotes, savedIds, handleVote, handleSave, handleUnsave, requireSignIn])
 
-  if (selectedBill) {
-    return (
-      <div className="page">
-        <Masthead />
-        <BackgroundEmblems />
-        <div className="app">
-          <BillDetail
-            bill={selectedBill}
-            onBack={() => setSelectedBill(null)}
-            user={user}
-            savedIds={savedIds}
-            onSave={handleSave}
-            onUnsave={handleUnsave}
-          />
-        </div>
-      </div>
-    )
+  let page
+  if (route.name === 'bill') {
+    page = <BillPage id={route.id} bills={bills} savedBills={savedBills} loading={loading} ctx={ctx} />
+  } else if (route.name === 'watchlist') {
+    page = <Watchlist bills={bills} savedBills={savedBills} ctx={ctx} />
+  } else {
+    page = <Home bills={bills} loading={loading} error={loadError} onRetry={retry} theme={theme} ctx={ctx} />
   }
 
   return (
-    <div className="page">
-      <Masthead />
-      <BackgroundEmblems />
-      <div className="app">
-      <div className="auth-bar">
-        <button
-          className="theme-toggle"
-          onClick={() => setDarkMode(!darkMode)}
-          style={{marginBottom: '0.75rem'}}
-        >
-          {darkMode ? '☀ Light mode' : '🌙 Dark mode'}
-        </button>
-        {user ? (
-          <div className="auth-bar-inner">
-            <span>Signed in as {user.displayName}</span>
-            <button
-              onClick={() => setShowWatchlist(!showWatchlist)}
-              className="auth-btn"
-            >
-              {showWatchlist ? 'Browse bills' : `My watchlist (${savedIds.size})`}
-            </button>
-            <button onClick={signOutUser} className="auth-btn">Sign out</button>
-          </div>
-        ) : (
-          <button onClick={signInWithGoogle} className="auth-btn">
-            Sign in with Google
-          </button>
-        )}
+    <div className="app">
+      <a href="#main" className="skip-link" onClick={(e) => { e.preventDefault(); document.getElementById('main')?.focus() }}>
+        Skip to content
+      </a>
+      <Header
+        route={route}
+        user={user}
+        savedCount={savedIds.size}
+        theme={theme}
+        onToggleTheme={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
+        onSignIn={handleSignIn}
+        onSignOut={() => signOutUser()}
+      />
+      <motion.main
+        id="main"
+        tabIndex={-1}
+        key={routeKey}
+        initial={reduce ? false : { opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+      >
+        {page}
+      </motion.main>
+      <Footer user={user} />
+      <div className="toast-region" aria-live="polite">
+        {toast && <div className="toast" key={toast.key}>{toast.message}</div>}
       </div>
-
-      {showWatchlist ? (
-        <div>
-          <h2 style={{fontSize:'1.1rem', margin:'1.5rem 0 1rem'}}>My Watchlist</h2>
-          {savedBills.length === 0 ? (
-            <p style={{color:'var(--text-secondary)'}}>No saved bills yet — browse bills and click ☆ Save to add them here.</p>
-          ) : (
-            <div className="bill-list">
-              {savedBills.map((bill) => (
-                <BillCard
-                  key={bill.id}
-                  bill={bill}
-                  onClick={setSelectedBill}
-                  user={user}
-                  savedIds={savedIds}
-                  onSave={handleSave}
-                  onUnsave={handleUnsave}
-                  votes={votes[bill.id]}
-                  userVote={userVotes[bill.id]}
-                  onVote={handleVote}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      ) : (
-        <>
-          <input
-            type="text"
-            className="search-input"
-            placeholder="Search bills by keyword..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-
-          <div className="filters">
-            {allTopics.map((topic) => (
-              <button
-                key={topic}
-                className={
-                  topic === activeFilter
-                    ? 'filter active'
-                    : `filter ${topic === 'All' ? '' : getTopicClass(topic)}`
-                }
-                onClick={() => setActiveFilter(topic)}
-              >
-                {topic}
-              </button>
-            ))}
-          </div>
-
-          {loading && (
-            <p>
-              Loading bills...
-              {slowLoad && <span style={{color:'var(--text-secondary)'}}> The server is waking up, this can take up to a minute on the first visit.</span>}
-            </p>
-          )}
-
-          {loadError && (
-            <p style={{color:'var(--text-secondary)'}}>Couldn't load bills right now. Please refresh in a moment.</p>
-          )}
-
-          {!loading && !loadError && filteredBills.length === 0 && (
-            <p style={{color:'var(--text-secondary)'}}>No bills match your search.</p>
-          )}
-
-          <div className="bill-list">
-            {filteredBills.map((bill) => (
-              <BillCard
-                key={bill.id}
-                bill={bill}
-                onClick={setSelectedBill}
-                user={user}
-                savedIds={savedIds}
-                onSave={handleSave}
-                onUnsave={handleUnsave}
-                votes={votes[bill.id]}
-                userVote={userVotes[bill.id]}
-                onVote={handleVote}
-              />
-            ))}
-          </div>
-        </>
-      )}
-      </div>
+      <div className="grain" aria-hidden="true" />
     </div>
   )
 }
-
-export default App
