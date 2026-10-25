@@ -568,8 +568,14 @@ main:focus { outline: none; }
 }
 .shelf-book.is-active .book,
 .shelf-book:focus-visible .book {
-  transform: translateZ(170px) translateY(-26px) rotateY(26deg) rotateX(4deg) scale(1.2);
+  transform: translateZ(300px) translateY(-26px) rotateY(26deg) rotateX(4deg) scale(1.12);
 }
+
+/* Neighbors slide apart so the pulled book never cuts through them.
+   Uses the separate translate property so it stacks with Motion's transform. */
+.shelf-book { translate: 0 0; transition: translate 0.6s var(--ease-out); }
+.shelf-book.is-active ~ .shelf-book { translate: calc(var(--bookw) * 0.3) 0; }
+.shelf-book:has(~ .shelf-book.is-active) { translate: calc(var(--bookw) * -0.3) 0; }
 .book-shelf .book-shadow { display: none; }
 
 .book-shelf .book-spine {
@@ -1870,5 +1876,5 @@ main:focus { outline: none; }
   .bookcase-back { inset: 40px 40px 34px; }
   .bookcase .shelf-plank { margin: 0 -40px; height: 40px; }
   .bookcase .shelf-scene { padding-top: 70px; }
-  .bookcase .shelf-row { --bookw: clamp(170px, 18vw, 262px); gap: clamp(18px, 2.4vw, 38px); }
+  .bookcase .shelf-row { --bookw: clamp(160px, 16.5vw, 240px); gap: clamp(26px, 3.6vw, 56px); }
 }

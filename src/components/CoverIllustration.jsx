@@ -93,10 +93,18 @@ function Classroom({ p }) {
 function Arrival({ p }) {
   return (
     <g>
-      <g className="ill-plane">
-        <path d="M58 92 h70 l22 -14 h10 l-12 20 h26 l10 -8 h8 l-6 14 l6 14 h-8 l-10 -8 h-26 l12 20 h-10 l-22 -14 h-70 z" fill={p.b} transform="translate(0 6)" />
-        <path d="M24 104 h26" stroke={p.b} strokeWidth="4" strokeDasharray="6 6" strokeLinecap="round" className="ill-trail" />
-      </g>
+      <g className="ill-plane"><g transform="translate(14 -26) scale(0.9)">
+        {/* side-view airliner heading right */}
+        <path d="M30 108 h20" stroke={p.b} strokeWidth="4" strokeDasharray="6 7" strokeLinecap="round" className="ill-trail" />
+        <path d="M118 98 L98 76 h12 L142 98 Z" fill={p.b} opacity="0.7" />
+        <path d="M60 98 L50 70 h15 L88 98 Z" fill={p.b} />
+        <path d="M66 98 h112 c14 0 26 5 30 12 c-4 7 -16 12 -30 12 h-112 c-9 0 -14 -5 -14 -12 c0 -7 5 -12 14 -12 Z" fill={p.b} />
+        <path d="M60 110 L46 116 h18 L74 110 Z" fill={p.a} opacity="0.55" />
+        <path d="M112 116 L88 146 h16 L146 116 Z" fill={p.b} />
+        <rect x="108" y="122" width="24" height="10" rx="5" fill={p.a} opacity="0.55" />
+        {[80, 92, 104, 116, 128, 140, 152, 164].map((x) => <circle key={x} cx={x} cy="106" r="2.6" fill={p.bg} />)}
+        <path d="M186 103 h8 c4 1 7 3 9 6 h-17 Z" fill={p.bg} />
+      </g></g>
       <polygon points="168,170 236,124 304,170" fill={p.a} transform="translate(-30 0)" />
       <rect x="148" y="170" width="116" height="96" fill={p.a} />
       <rect x="194" y="214" width="26" height="52" rx="3" fill={p.b} />
