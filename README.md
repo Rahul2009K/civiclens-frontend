@@ -1,6 +1,6 @@
 # Billshelf (website)
 
-**Live:** https://civiclens-frontend-gilt.vercel.app
+**Live:** https://billshelf.vercel.app
 
 Billshelf explains the 100 newest bills in the U.S. Congress in plain English, for high school students and anyone without a civics or legal background. Every bill gets a short summary, its key provisions, who it affects, why it matters to a young person, and where it stands in the lawmaking process.
 
