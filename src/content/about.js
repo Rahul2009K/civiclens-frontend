@@ -33,7 +33,7 @@ export const ABOUT = {
   privacy: [
     'You can read everything without an account.',
     'Signing in with Google is only needed to save bills and vote. Billshelf stores your saved bills and your votes under an anonymous account ID.',
-    'Vote totals are public counts. Nobody can see how you voted.',
+    'Vote totals are public counts. Votes are stored under a random account ID, never your name or email.',
     'The site uses Google Analytics to count visits. There are no ads and no data is sold.',
   ],
 
